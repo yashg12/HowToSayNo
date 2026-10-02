@@ -1,18 +1,13 @@
 import { useEffect, useState } from 'react';
 import { ArrowRight, Check, ChevronDown, Copy, LockKeyhole, Mail, MessageCircle, Menu, Sparkles, X } from 'lucide-react';
-import { generateMockResponse, getMockVariant } from './services/api';
-import { faqs, mockHistory, pricingPlans, recipientOptions } from './data/mockData';
+import { checkBackendHealth, generateRefusalApi, getUserUsageApi, getUserSessionInfo } from './services/api';
+import { initAuthSession, signInUser, signUpUser, signOutUser, onAuthChange } from './services/auth';
+import { identifyUser, resetPostHog, trackEvent } from './services/posthog';
+import { faqs, recipientOptions } from './data/mockData';
 import './App.css';
 
 const exactResponse = 'Hi [Name], I really appreciate you thinking of me for this. Unfortunately, my plate is currently full with my family commitments this weekend, so I won\'t be able to take this on. Let\'s touch base on Monday to see how else I can support the team.';
 const secondResponse = 'I\'d love to help out with this, but I\'m completely booked up this weekend and need to protect that time for family. I can certainly take a look at this first thing on Monday morning if that works?';
-const mockReviews = [
-  { name: 'Maya R.', role: 'Product designer', text: 'I finally sent the message I had been rewriting for three days. It felt clear, kind, and completely like me.' },
-  { name: 'Jordan L.', role: 'Small business owner', text: 'The tone choices make such a difference. It helped me protect my time without making a client feel dismissed.' },
-  { name: 'Avery K.', role: 'Graduate student', text: 'A calm little reset when I am overthinking a difficult message. The drafts are simple and thoughtful.' },
-  { name: 'Priya S.', role: 'Team lead', text: 'It gives you a respectful way to be firm. I use it whenever a work conversation feels harder than it should.' },
-  { name: 'Daniel W.', role: 'Teacher', text: 'The wording is warm without being vague. Saying no feels much less uncomfortable now.' }
-];
 
 function navigate(event) {
   const href = event.currentTarget.getAttribute('href');
@@ -47,7 +42,6 @@ function ScrollDownIndicator() {
       const fullHeight = document.documentElement.scrollHeight;
       const currentScroll = window.scrollY;
 
-      // Hide only when reached within 150px of the very bottom of the page
       if (currentScroll + windowHeight >= fullHeight - 150) {
         setVisible(false);
       } else {
@@ -81,7 +75,209 @@ function ScrollDownIndicator() {
   );
 }
 
-function Header({ simple = false }) {
+function ContactModal({ isOpen, onClose, planName = 'Upgrade' }) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="auth-modal-overlay" onClick={onClose}>
+      <div className="auth-modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px' }}>
+        <div className="auth-modal-header-banner" style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)' }}>
+          <button className="auth-modal-close-btn" onClick={onClose} aria-label="Close modal">
+            <X size={18} />
+          </button>
+          <div className="auth-value-badge" style={{ background: '#22c55e', color: '#ffffff' }}>💬 Quick Connect</div>
+          <h3 style={{ color: '#ffffff' }}>Get Started with {planName}</h3>
+          <p style={{ color: '#cbd5e1' }}>
+            No automated checkout delays! Talk directly with our developer team to get instant access &amp; passes.
+          </p>
+        </div>
+
+        <div className="auth-modal-body" style={{ padding: '24px 20px', textAlign: 'center' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '20px' }}>
+            <a
+              href="https://wa.me/918767877602"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="schedule-call-green-btn"
+              style={{ justifyContent: 'center', width: '100%', borderRadius: '14px', fontSize: '15px' }}
+              onClick={() => {
+                trackEvent('contact_whatsapp_clicked', { plan: planName });
+              }}
+            >
+              📅 Schedule a Call / WhatsApp <ArrowRight size={18} />
+            </a>
+
+            <a
+              href="mailto:basicbrain1924@gmail.com"
+              className="contact-gmail-btn"
+              style={{ justifyContent: 'center', width: '100%', borderRadius: '14px', fontSize: '15px' }}
+              onClick={() => {
+                trackEvent('contact_gmail_clicked', { plan: planName });
+              }}
+            >
+              <Mail size={18} /> Gmail Us Directly
+            </a>
+          </div>
+
+          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '12px 14px', fontSize: '13px', color: '#475569', fontWeight: '600' }}>
+            <Check size={16} style={{ color: '#2563eb', display: 'inline', marginRight: '6px', verticalAlign: 'middle' }} />
+            No sales pitch. Just a conversation. <strong>(Call: 87678 77602)</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AuthModal({ isOpen, onClose, onSuccess, initialWarning = '' }) {
+  const [tab, setTab] = useState('signin');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [infoMsg, setInfoMsg] = useState('');
+
+  if (!isOpen) return null;
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!email || !password) {
+      setErrorMsg('Please enter both email and password.');
+      return;
+    }
+    setLoading(true);
+    setErrorMsg('');
+    setInfoMsg('');
+
+    try {
+      if (tab === 'signup') {
+        const res = await signUpUser(email, password);
+        trackEvent('user_registered', { email });
+        if (res?.session) {
+          setInfoMsg('Account registered successfully! Unlocking your extra credits...');
+          setTimeout(() => {
+            onSuccess();
+            onClose();
+          }, 800);
+        } else {
+          setInfoMsg('Registration successful! Please check your email to confirm or sign in directly.');
+          setTab('signin');
+        }
+      } else {
+        const res = await signInUser(email, password);
+        trackEvent('user_signed_in', { email });
+        if (res?.session) {
+          onSuccess();
+          onClose();
+        }
+      }
+    } catch (err) {
+      trackEvent('auth_error', { tab, error: err.message });
+      setErrorMsg(err.message || 'Authentication failed. Please check your credentials.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const isRateLimited = errorMsg.toLowerCase().includes('rate limit') || errorMsg.toLowerCase().includes('limit reached');
+
+  return (
+    <div className="auth-modal-overlay" onClick={onClose}>
+      <div className="auth-modal-card" onClick={(e) => e.stopPropagation()}>
+        <div className="auth-modal-header-banner">
+          <button className="auth-modal-close-btn" onClick={onClose} aria-label="Close modal">
+            <X size={18} />
+          </button>
+          <div className="auth-value-badge">✨ Unlock Extra Credits</div>
+          <h3>{tab === 'signup' ? 'Register Your Account' : 'Sign In to HowToSayNo'}</h3>
+          <p>
+            {tab === 'signup'
+              ? 'Register now to get extra refusal credits, save history & access web extension!'
+              : 'Sign in to access your extra refusal credits and stay logged in seamlessly.'}
+          </p>
+        </div>
+
+        {initialWarning && (
+          <div style={{ background: '#fef3c7', color: '#92400e', padding: '10px 16px', fontSize: '13px', fontWeight: '700', textAlign: 'center', borderBottom: '1px solid #fde68a' }}>
+            {initialWarning}
+          </div>
+        )}
+
+        <div className="auth-modal-tabs">
+          <button className={`auth-tab-btn ${tab === 'signin' ? 'active' : ''}`} onClick={() => { setTab('signin'); setErrorMsg(''); setInfoMsg(''); }}>
+            Sign In
+          </button>
+          <button className={`auth-tab-btn ${tab === 'signup' ? 'active' : ''}`} onClick={() => { setTab('signup'); setErrorMsg(''); setInfoMsg(''); }}>
+            Register
+          </button>
+        </div>
+
+        <div className="auth-modal-body">
+          {errorMsg && (
+            <div style={{ background: '#fef2f2', color: '#b91c1c', border: '1px solid #fecaca', padding: '10px 14px', borderRadius: '10px', fontSize: '13px', marginBottom: '14px', fontWeight: '600' }}>
+              ⚠️ {errorMsg}
+              {isRateLimited && (
+                <div style={{ marginTop: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => { setTab('signin'); setErrorMsg(''); }}
+                    style={{ background: '#2563eb', color: '#ffffff', border: 'none', padding: '6px 14px', borderRadius: '6px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
+                  >
+                    Switch to Sign In →
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+          {infoMsg && (
+            <div style={{ background: '#f0fdf4', color: '#15803d', border: '1px solid #bbf7d0', padding: '10px 14px', borderRadius: '10px', fontSize: '13px', marginBottom: '14px', fontWeight: '600' }}>
+              ✓ {infoMsg}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit}>
+            <div className="auth-input-group">
+              <label>Email Address</label>
+              <input
+                type="email"
+                required
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div className="auth-input-group">
+              <label>Password</label>
+              <input
+                type="password"
+                required
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+
+            <button type="submit" className="auth-submit-btn" disabled={loading}>
+              {loading
+                ? 'Processing...'
+                : tab === 'signup'
+                ? 'Register'
+                : 'Sign In'}
+            </button>
+          </form>
+
+          <div className="auth-benefits-checklist">
+            <div className="auth-benefit-item"><Check size={14} className="feat-check-icon" /> Extra AI Refusal Credits</div>
+            <div className="auth-benefit-item"><Check size={14} className="feat-check-icon" /> Save Refusal History &amp; Favorites</div>
+            <div className="auth-benefit-item"><Check size={14} className="feat-check-icon" /> Web Extension Integration</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Header({ simple = false, user = null, freeRemaining = 3, maxLimit = 3, onOpenAuthModal, onSignOut }) {
   const [open, setOpen] = useState(false);
   const scrollToCoreTool = (e) => {
     e.preventDefault();
@@ -107,7 +303,27 @@ function Header({ simple = false }) {
             <a href="#pricing" onClick={(e) => { e.preventDefault(); setOpen(false); document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' }); }}>Pricing</a>
           </>
         )}
-        <a className="reference-signin" href="#core-tool" onClick={scrollToCoreTool}>Sign In</a>
+        
+        {user && user.isAuthenticated ? (
+          <div className="auth-user-badge-header">
+            <span title={user.email}>👤 {user.email?.split('@')[0]}</span>
+            <button className="auth-signout-btn" onClick={onSignOut}>Sign Out</button>
+          </div>
+        ) : (
+          <a
+            className="reference-signin"
+            href="#core-tool"
+            onClick={(e) => {
+              e.preventDefault();
+              setOpen(false);
+              trackEvent('sign_in_clicked', { source: 'header_nav' });
+              onOpenAuthModal();
+            }}
+          >
+            Sign In / Register
+          </a>
+        )}
+
         <a className="reference-use" href="#core-tool" onClick={scrollToCoreTool}>Use Now <ArrowRight size={16} /></a>
       </div>
       <button className="reference-menu" onClick={() => setOpen(!open)} aria-label="Open navigation">{open ? <X /> : <Menu />}</button>
@@ -154,21 +370,21 @@ const planDataNew = {
       { name: 'QUICK WEEKLY', icon: '⚡', subtitle: 'Need help this week?', desc: 'Get quick assistance when you need it.', price: '$1.99', unit: '/ 7 days', billedNote: 'Billed weekly', features: ['AI assistance', 'Unlimited assistance during the plan period', 'Quick responses'], action: 'Get Weekly', actionStyle: 'outline' },
       { name: 'SMART MONTHLY', icon: '👤', badge: 'MOST POPULAR', subtitle: 'Want to say No without feeling guilty?', desc: "I’ll help you find the right words.", price: '$7.99', unit: '/ month', billedNote: 'Billed monthly • Cancel anytime', features: ['Unlimited AI assistance', 'Polite & diplomatic responses', 'Multiple response tones', 'Everyday communication assistance'], action: 'Choose Monthly', actionStyle: 'solid-green', featured: true },
       { name: 'PROFESSIONAL PRO', icon: '💼', subtitle: 'Struggling to say No at work?', desc: "I’ll help you handle professional situations.", price: '$19.99', unit: '/ month', billedNote: 'Billed monthly • Cancel anytime', features: ['Advanced AI responses', 'Professional communication', 'Advanced assistance', 'More powerful AI capabilities'], action: 'Go Pro', actionStyle: 'solid-green' },
-      { name: 'ONE-TIME PURCHASE', icon: '👑', subtitle: 'Want help whenever you need it?', desc: 'Get lifetime access.', price: '$699.99', unit: '', billedNote: 'One-time payment • Lifetime access', features: ['Lifetime access', 'No recurring subscription', 'Full access to the included features'], action: 'Get Lifetime', actionStyle: 'outline' }
+      { name: 'ONE-TIME PURCHASE', icon: '👑', subtitle: 'Want help whenever you need it?', desc: 'Get lifetime access.', price: '$699.99', unit: '', billedNote: 'One-time payment • Lifetime access', features: ['Lifetime access', 'No recurring subscription', 'Full access to the included features'], action: 'Buy Lifetime', actionStyle: 'outline' }
     ],
     yearly: [
       { name: 'FREE', icon: '🌱', subtitle: 'Just getting started?', desc: 'Try saying No with confidence.', price: '$0', unit: '', billedNote: 'Free forever', features: ['3 AI assists', 'Basic assistance', 'Essential features'], action: 'Start Free', actionStyle: 'outline' },
       { name: 'QUICK WEEKLY', icon: '⚡', subtitle: 'Need help this week?', desc: 'Get quick assistance when you need it.', price: '$1.99', unit: '/ 7 days', billedNote: 'Billed weekly', features: ['AI assistance', 'Unlimited assistance during the plan period', 'Quick responses'], action: 'Get Weekly', actionStyle: 'outline' },
       { name: 'SMART MONTHLY', icon: '👤', badge: 'MOST POPULAR', subtitle: 'Want to say No without feeling guilty?', desc: "I’ll help you find the right words.", price: '$6.25', unit: '/ month', originalPrice: '$7.99', billedNote: 'Billed $74.99 yearly (Save 22%)', discountPill: 'Save 22%', features: ['Unlimited AI assistance', 'Polite & diplomatic responses', 'Multiple response tones', 'Everyday communication assistance'], action: 'Choose Monthly', actionStyle: 'solid-green', featured: true },
       { name: 'PROFESSIONAL PRO', icon: '💼', subtitle: 'Struggling to say No at work?', desc: "I’ll help you handle professional situations.", price: '$15.00', unit: '/ month', originalPrice: '$19.99', billedNote: 'Billed $179.99 yearly (Save 25%)', discountPill: 'Save 25%', features: ['Advanced AI responses', 'Professional communication', 'Advanced assistance', 'More powerful AI capabilities'], action: 'Go Pro', actionStyle: 'solid-green' },
-      { name: 'ONE-TIME PURCHASE', icon: '👑', subtitle: 'Want help whenever you need it?', desc: 'Get lifetime access.', price: '$699.99', unit: '', billedNote: 'One-time payment • Lifetime access', features: ['Lifetime access', 'No recurring subscription', 'Full access to the included features'], action: 'Get Lifetime', actionStyle: 'outline' }
+      { name: 'ONE-TIME PURCHASE', icon: '👑', subtitle: 'Want help whenever you need it?', desc: 'Get lifetime access.', price: '$699.99', unit: '', billedNote: 'One-time payment • Lifetime access', features: ['Lifetime access', 'No recurring subscription', 'Full access to the included features'], action: 'Buy Lifetime', actionStyle: 'outline' }
     ]
   }
 };
 
-function PricingSection() {
-  const [currency, setCurrency] = useState('inr'); // 'inr' or 'usd'
-  const [billing, setBilling] = useState('monthly'); // 'monthly' or 'yearly'
+function PricingSection({ user = null, onOpenAuthModal, onOpenContactModal }) {
+  const [currency, setCurrency] = useState('inr');
+  const [billing, setBilling] = useState('monthly');
   const activePlans = planDataNew[currency][billing];
 
   return (
@@ -180,7 +396,6 @@ function PricingSection() {
         <h2>Say No With Confidence</h2>
         <p className="pricing-tagline">Choose the plan that fits your needs. Get the right words, save time, and communicate with confidence.</p>
 
-        {/* Watch Guide Video Option */}
         <div className="watch-guide-container">
           <a
             href="https://youtube.com/@printsmaartofficialpage?si=fpCgFSoj9R4iB2Os"
@@ -195,7 +410,6 @@ function PricingSection() {
           </div>
         </div>
 
-        {/* Currency Switcher */}
         <div className="currency-selector">
           <button className={currency === 'inr' ? 'curr-btn active' : 'curr-btn'} onClick={() => setCurrency('inr')}>
             INR (₹)
@@ -205,7 +419,6 @@ function PricingSection() {
           </button>
         </div>
 
-        {/* Billing Toggle (Monthly / Yearly) */}
         <div className="billing-toggle-container">
           <span className={billing === 'monthly' ? 'toggle-label active' : 'toggle-label'}>Monthly</span>
           <button
@@ -224,7 +437,6 @@ function PricingSection() {
         </div>
       </div>
 
-      {/* 5 Pricing Cards */}
       <div className="new-pricing-cards-grid">
         {activePlans.map((plan) => (
           <div className={`new-price-card ${plan.featured ? 'featured-card' : ''}`} key={plan.name}>
@@ -255,14 +467,29 @@ function PricingSection() {
               ))}
             </div>
 
-            <button className={`card-action-btn btn-${plan.actionStyle}`}>
+            <button
+              className={`card-action-btn btn-${plan.actionStyle}`}
+              onClick={(e) => {
+                e.preventDefault();
+                if (plan.name === 'FREE') {
+                  if (user && user.isAuthenticated) {
+                    document.getElementById('core-tool')?.scrollIntoView({ behavior: 'smooth' });
+                  } else {
+                    onOpenAuthModal();
+                  }
+                } else {
+                  if (onOpenContactModal) {
+                    onOpenContactModal(plan.name);
+                  }
+                }
+              }}
+            >
               {plan.action}
             </button>
           </div>
         ))}
       </div>
 
-      {/* Footer reassurance bar matching image 3 */}
       <div className="pricing-bottom-reassurance-bar">
         <span><Check size={14} className="reassure-check-icon" /> Secure Payment</span>
         <span><Check size={14} className="reassure-check-icon" /> Cancel Anytime</span>
@@ -276,6 +503,20 @@ function PricingSection() {
 function LandingPage() {
   const [faq, setFaq] = useState(0);
 
+  // User & Auth State
+  const [user, setUser] = useState(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authWarningMessage, setAuthWarningMessage] = useState('');
+
+  // Contact Modal State
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [contactModalPlan, setContactModalPlan] = useState('Upgrade');
+
+  const openContactModal = (planName = 'Upgrade') => {
+    setContactModalPlan(planName);
+    setIsContactModalOpen(true);
+  };
+
   // Core tool state for Landing Page inline access
   const [situation, setSituation] = useState('');
   const [recipient, setRecipient] = useState('');
@@ -283,17 +524,120 @@ function LandingPage() {
   const [response, setResponse] = useState('');
   const [loading, setLoading] = useState(false);
   const [attempts, setAttempts] = useState(0);
+  const [maxLimit, setMaxLimit] = useState(3);
+  const [freeRemaining, setFreeRemaining] = useState(3);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [backendStatus, setBackendStatus] = useState(null);
+
+  const refreshUserUsage = async () => {
+    try {
+      const sessionInfo = await getUserSessionInfo();
+      setUser(sessionInfo);
+
+      if (sessionInfo && sessionInfo.userId) {
+        if (sessionInfo.isAuthenticated) {
+          identifyUser(sessionInfo.userId, sessionInfo.userEmail);
+        }
+        const usage = await getUserUsageApi(sessionInfo.userId, sessionInfo.isAuthenticated);
+        if (usage && typeof usage.generation_count === 'number') {
+          setAttempts(usage.generation_count);
+          setMaxLimit(usage.max_limit || (sessionInfo.isAuthenticated ? 10 : 3));
+          setFreeRemaining(usage.free_generations_remaining);
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to refresh user usage:', e);
+    }
+  };
+
+  useEffect(() => {
+    checkBackendHealth().then((res) => {
+      setBackendStatus(res);
+    });
+
+    initAuthSession().then(() => {
+      refreshUserUsage();
+    });
+
+    const sub = onAuthChange((event, session, currentUser) => {
+      if (event === 'SIGNED_IN') {
+        trackEvent('user_signed_in', { email: session?.user?.email });
+      }
+      refreshUserUsage();
+    });
+
+    return () => {
+      if (sub && sub.subscription) sub.subscription.unsubscribe();
+    };
+  }, []);
+
+  const openAuthModalWithWarning = (msg = '') => {
+    trackEvent('auth_modal_opened', { reason: msg });
+    setAuthWarningMessage(msg || "⚠️ Free limit reached (3/3). Sign in or register to get extra credits!");
+    setIsAuthModalOpen(true);
+  };
+
+  const handleSignOut = async () => {
+    trackEvent('user_signed_out');
+    resetPostHog();
+    await signOutUser();
+    await refreshUserUsage();
+  };
 
   const generate = async () => {
-    if (!situation.trim() || loading || attempts >= 3) return;
+    if (!situation.trim() || loading) return;
+
+    // Guest exhausted check -> automatically open AuthModal
+    if (freeRemaining <= 0 && (!user || !user.isAuthenticated)) {
+      trackEvent('guest_limit_reached', { attempts });
+      openAuthModalWithWarning("⚠️ You've used all 3 free guest attempts! Sign in or register to get extra credits!");
+      return;
+    }
+
+    if (freeRemaining <= 0 && user && user.isAuthenticated) {
+      trackEvent('member_limit_reached', { attempts });
+      setErrorMsg("Member credit limit reached (10/10). Please upgrade to Pro for unlimited AI access!");
+      return;
+    }
+
     setLoading(true);
-    const draft = await generateMockResponse();
-    setResponse(draft || exactResponse);
-    setAttempts((current) => current + 1);
-    setLoading(false);
+    setErrorMsg('');
+
+    try {
+      trackEvent('refusal_generate_started', { tone, recipient, isAuthenticated: !!user?.isAuthenticated });
+
+      const data = await generateRefusalApi({
+        situation,
+        recipient: recipient || 'Colleague / Friend',
+        tone
+      });
+      if (data && data.response) {
+        setResponse(data.response);
+        trackEvent('refusal_generate_success', { tone, recipient });
+        if (typeof data.generation_count === 'number') {
+          setAttempts(data.generation_count);
+          setMaxLimit(data.max_limit || (user?.isAuthenticated ? 10 : 3));
+          setFreeRemaining(data.free_generations_remaining);
+        } else {
+          setAttempts((current) => current + 1);
+          setFreeRemaining((current) => Math.max(0, current - 1));
+        }
+      }
+    } catch (err) {
+      console.error('Generation error:', err);
+      trackEvent('refusal_generate_failed', { error: err.message });
+      if (!user?.isAuthenticated && (err.status === 403 || err.message?.includes('limit') || err.message?.includes('sign in'))) {
+        openAuthModalWithWarning("⚠️ Free guest limit reached! Sign in or register to get extra credits!");
+      } else {
+        setErrorMsg(err.message || 'Failed to generate refusal');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
+
   const copy = (text) => navigator.clipboard?.writeText(text);
-  const startOver = () => { setSituation(''); setRecipient(''); setResponse(''); setTone('Diplomatic'); };
+  const startOver = () => { setSituation(''); setRecipient(''); setResponse(''); setTone('Diplomatic'); setErrorMsg(''); };
 
   const testimonialsList1 = [
     { name: 'Rahul M.', role: 'India', stars: 5, text: "I always struggle to say no to my manager without sounding like I'm making excuses. I explained the situation to HowToSayNo and it gave me a professional response that I could send directly. It saved me from overthinking the message for 20 minutes." },
@@ -321,7 +665,16 @@ function LandingPage() {
 
   return (
     <div className="reference-site">
-      <Header />
+      <Header
+        user={user}
+        freeRemaining={freeRemaining}
+        maxLimit={maxLimit}
+        onOpenAuthModal={() => {
+          setAuthWarningMessage('');
+          setIsAuthModalOpen(true);
+        }}
+        onSignOut={handleSignOut}
+      />
       <main>
         {/* 1. Hero Section */}
         <section className="reference-hero">
@@ -343,7 +696,7 @@ function LandingPage() {
           </div>
         </section>
 
-        {/* 1.5. Intro Feature Showcase Section (Between Hero and Core Tool) */}
+        {/* 1.5. Intro Feature Showcase Section */}
         <section className="reference-section feature-showcase-page" style={{ padding: '60px 5%', background: '#ffffff', textAlign: 'center' }}>
           <div style={{ maxWidth: '840px', margin: '0 auto 40px' }}>
             <h2 style={{ fontSize: 'clamp(24px, 3.8vw, 34px)', fontWeight: '800', lineHeight: '1.35', color: '#111a2d', margin: 0 }}>
@@ -370,25 +723,49 @@ function LandingPage() {
           </div>
         </section>
 
-        {/* 2. Core Tool access (Chat Box / Inline Generator) */}
+        {/* 2. Core Tool access */}
         <section className="reference-section inline-tool-section" id="core-tool">
-          <h2 className="section-title-center">Try Core Tool Directly</h2>
+          <h2 className="section-title-center">Craft Your Polite Boundary</h2>
           <p className="section-subtitle-center">
-            Draft your polite refusal right now without leaving the page. - The AI that drafts Polite &amp; Diplomatic Refusals so you keep Your boundaries &amp; your professional and personal relationships intact.
+            Draft your polite refusal right now without leaving the page. The AI that articulates diplomatic refusals while preserving your boundaries &amp; relationships intact.
           </p>
 
-          {/* Web Extension Promo & Free Attempts Counter */}
-          <div className="tool-free-limit-banner">
-            <span className="free-limit-badge">3/3 Free Chances</span>
-            <p className="extension-promo-text">
-              Do the free sign in &amp; enjoy 10 free How to Say No assists with Web Extension Feature!
+          {/* Inspiring Boundary Fact Banner */}
+          <div className="tool-free-limit-banner" style={{ background: '#f0f9ff', border: '1.5px solid #bae6fd' }}>
+            <span className="free-limit-badge" style={{ background: '#0284c7', color: '#ffffff' }}>
+              💡 Did You Know?
+            </span>
+            <p className="extension-promo-text" style={{ color: '#0369a1' }}>
+              {!user?.isAuthenticated ? (
+                <span>
+                  Saying "No" politely to low-priority requests saves over <strong>4.5 hours a week</strong> of stress! <u style={{ cursor: 'pointer', marginLeft: '6px' }} onClick={() => openAuthModalWithWarning('✨ Sign in or register to get extra credits & enjoy web extension feature!')}>Sign in to save your refusal history.</u>
+                </span>
+              ) : (
+                <span>
+                  Boundaries protect your relationships. A clear, diplomatic refusal increases professional respect<strong></strong>!
+                </span>
+              )}
             </p>
           </div>
 
           {response ? (
             <OutputBox response={response} copy={copy} onStartOver={startOver} />
           ) : (
-            <InputBox situation={situation} setSituation={setSituation} recipient={recipient} setRecipient={setRecipient} tone={tone} setTone={setTone} loading={loading} generate={generate} attempts={attempts} />
+            <InputBox
+              situation={situation}
+              setSituation={setSituation}
+              recipient={recipient}
+              setRecipient={setRecipient}
+              tone={tone}
+              setTone={setTone}
+              loading={loading}
+              generate={generate}
+              freeRemaining={freeRemaining}
+              maxLimit={maxLimit}
+              user={user}
+              errorMsg={errorMsg}
+              onOpenAuthModal={() => openAuthModalWithWarning('⚠️ Sign in or register to get extra refusal credits!')}
+            />
           )}
         </section>
 
@@ -415,7 +792,7 @@ function LandingPage() {
           </div>
         </section>
 
-        {/* 4. Testimonials Page 1 (5 peoples) */}
+        {/* 4. Testimonials Page 1 */}
         <section className="reviews-section" id="reviews">
           <h2>People who found the right words.</h2>
           <div className="reviews-grid">
@@ -431,7 +808,7 @@ function LandingPage() {
           </div>
         </section>
 
-        {/* 5. Mid-Page Conversion Re-Hook (Use Now button) */}
+        {/* 5. Mid-Page Conversion Re-Hook */}
         <section className="reference-section preview-cta">
           <h2>Ready to Set Your Boundaries?</h2>
           <b>Be the person who get loved by every right one!</b>
@@ -477,12 +854,15 @@ function LandingPage() {
         </section>
 
         {/* 8. Pricing Page */}
-        <PricingSection />
+        <PricingSection
+          user={user}
+          onOpenAuthModal={() => openAuthModalWithWarning('✨ Sign in or register to start with free credits!')}
+          onOpenContactModal={openContactModal}
+        />
 
-        {/* 9. Direct Contact + Schedule a Call (Let's Make It Better) */}
+        {/* 9. Direct Contact + Schedule a Call */}
         <section className="feedback-section-compact" id="contact">
           <div className="feedback-compact-container">
-            {/* Left Box */}
             <div className="feedback-compact-left">
               <div className="feedback-pill-tag-blue">
                 <MessageCircle size={15} /> Get Help from Our Team
@@ -517,7 +897,6 @@ function LandingPage() {
               </div>
             </div>
 
-            {/* Right What You'll Get Card */}
             <div className="feedback-compact-right">
               <div className="what-you-get-card-inline">
                 <div className="gift-box-left">
@@ -570,7 +949,7 @@ function LandingPage() {
         </section>
       </main>
 
-      {/* Floating 3 Contact Buttons Stack (YouTube, WhatsApp, Gmail) */}
+      {/* Floating 3 Contact Buttons Stack */}
       <div className="floating-contact-stack">
         <a
           href="https://youtube.com/@printsmaartofficialpage?si=fpCgFSoj9R4iB2Os"
@@ -603,16 +982,164 @@ function LandingPage() {
         </a>
       </div>
 
-      {/* 11. Footer */}
       <ScrollDownIndicator />
       <Footer />
+
+      {/* Auth Modal Popup */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={() => refreshUserUsage()}
+        initialWarning={authWarningMessage}
+      />
+
+      {/* Direct Contact / Schedule Call Modal Popup */}
+      <ContactModal
+        isOpen={isContactModalOpen}
+        onClose={() => setIsContactModalOpen(false)}
+        planName={contactModalPlan}
+      />
     </div>
   );
 }
 
-function Feature({ icon, title, children }) { return <div className="reference-feature"><span>{icon}</span><h3>{title}</h3><p>{children}</p></div>; }
-function CheckLine({ text }) { return <span className="check-line"><Check size={13} />{text}</span>; }
-function PricingCard({ badge, name, description, price, period, detail, features, action, featured = false }) { return <article className={`pricing-card ${featured ? 'pricing-card-featured' : ''}`}><span className="pricing-badge">{badge}</span><h3>{name}</h3><p className="pricing-description">{description}</p><div className="pricing-price"><strong>{price}</strong><span>{period}</span></div><p className="pricing-detail">{detail}</p><div className="pricing-divider" />{features.map((feature) => <CheckLine key={feature} text={feature} />)}<button className="pricing-action">{action}</button></article>; }
+function SelectField({ value, onChange }) { return <div className="reference-select"><select value={value} onChange={(event) => onChange(event.target.value)}><option value="">Select relationship...</option>{recipientOptions.map((option) => <option key={option} value={option}>{option}</option>)}</select><ChevronDown size={22} /></div>; }
+
+function InputBox({ situation, setSituation, recipient, setRecipient, tone, setTone, loading, generate, freeRemaining = 3, maxLimit = 3, user = null, errorMsg = '', onOpenAuthModal }) {
+  const isGuest = !user || !user.isAuthenticated;
+
+  return (
+    <section className="input-box">
+      <div className="input-attempts-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+        <label style={{ margin: 0 }}>1. What do you need to say no to?</label>
+        <span className="attempts-pill-tag" style={{ background: freeRemaining > 0 ? '#fef3c7' : '#fee2e2', color: freeRemaining > 0 ? '#b45309' : '#991b1b', fontSize: '12px', fontWeight: '700', padding: '3px 10px', borderRadius: '100px' }}>
+          {isGuest ? `${freeRemaining}/3 free chances remaining` : `${freeRemaining}/10 credits remaining`}
+        </span>
+      </div>
+      <textarea value={situation} onChange={(event) => setSituation(event.target.value)} placeholder="e.g., My boss wants me to work this weekend, but I have family plans..." />
+      <label>2. Who are you telling?</label>
+      <SelectField value={recipient} onChange={setRecipient} />
+      <label>3. Desired Tone</label>
+      <div className="tone-grid">
+        {['Diplomatic', 'Clear & Firm', 'Soft / Gentle', 'Professional'].map((item) => (
+          <button key={item} className={tone === item ? 'tone-selected' : ''} onClick={() => setTone(item)}>{item}</button>
+        ))}
+      </div>
+      {errorMsg && (
+        <div style={{ color: '#dc2626', fontSize: '14px', background: '#fef2f2', padding: '10px 14px', borderRadius: '10px', border: '1px solid #fecaca', margin: '12px 0 0 0' }}>
+          ⚠️ {errorMsg}
+        </div>
+      )}
+
+      {isGuest && freeRemaining <= 0 ? (
+        <button
+          className="draft-button"
+          onClick={onOpenAuthModal}
+          style={{ background: '#2563eb', color: '#ffffff' }}
+        >
+          <LockKeyhole size={20} /> Limit Reached (3/3 Free Used) — Sign In or Register for Extra Credits
+        </button>
+      ) : (
+        <button className="draft-button" onClick={generate} disabled={loading || (freeRemaining <= 0 && !isGuest)}>
+          {loading ? (
+            <span className="loading-btn-content">
+              <Sparkles size={20} className="spinner-icon" /> Generating your polite reply...
+            </span>
+          ) : freeRemaining <= 0 ? (
+            'Limit Reached (10/10 Used)'
+          ) : (
+            <><Sparkles size={21} /> Draft My Polite Reply</>
+          )}
+        </button>
+      )}
+    </section>
+  );
+}
+
+function OutputBox({ response, copy, onStartOver }) {
+  const [copiedIndex, setCopiedIndex] = useState(null);
+
+  let drafts = response.split(/###|\n\n(?=")/).map((d) => d.replace(/^\*\*AI:\*\*\s*/i, '').trim()).filter(Boolean);
+  
+  if (drafts.length === 1) {
+    const lines = drafts[0].split('\n\n').filter(Boolean);
+    if (lines.length >= 2) {
+      drafts = lines;
+    }
+  }
+
+  const handleCopy = (text, index) => {
+    copy(text);
+    trackEvent('copy_response', { draftIndex: index, charLength: text.length });
+    setCopiedIndex(index);
+    setTimeout(() => setCopiedIndex(null), 2000);
+  };
+
+  const handleRegenerate = () => {
+    trackEvent('regenerate_clicked');
+    onStartOver();
+  };
+
+  return (
+    <section className="output-box">
+      <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '20px', fontWeight: '700', color: '#1e293b', marginBottom: '20px' }}>
+        <span className="ready-dot" style={{ display: 'inline-block', width: '12px', height: '12px', borderRadius: '50%', background: '#22c55e' }} />
+        Your Drafts are Ready
+      </h2>
+
+      {drafts.map((draftText, idx) => (
+        <div key={idx} className="draft-response" style={{ position: 'relative', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '20px', marginBottom: '16px', textAlign: 'left' }}>
+          <p style={{ margin: 0, paddingRight: '40px', fontSize: '15px', lineHeight: '1.6', color: '#334155', whiteSpace: 'pre-wrap' }}>
+            {draftText}
+          </p>
+          <button
+            onClick={() => handleCopy(draftText, idx)}
+            aria-label={`Copy draft ${idx + 1}`}
+            style={{
+              position: 'absolute',
+              top: '16px',
+              right: '16px',
+              background: 'transparent',
+              border: 'none',
+              color: copiedIndex === idx ? '#22c55e' : '#64748b',
+              cursor: 'pointer',
+              padding: '6px',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s'
+            }}
+            title="Copy draft"
+          >
+            <Copy size={18} />
+          </button>
+        </div>
+      ))}
+
+      <div style={{ display: 'flex', justifyContent: 'center', marginTop: '24px' }}>
+        <button
+          className="start-over"
+          onClick={handleRegenerate}
+          style={{
+            background: '#cbd5e1',
+            color: '#1e293b',
+            border: 'none',
+            padding: '12px 32px',
+            borderRadius: '100px',
+            fontSize: '16px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            transition: 'background 0.2s'
+          }}
+        >
+          Ask Again
+        </button>
+      </div>
+    </section>
+  );
+}
+
 function Footer() {
   return (
     <footer className="reference-footer">
@@ -650,49 +1177,6 @@ function Footer() {
   );
 }
 
-function SelectField({ value, onChange }) { return <div className="reference-select"><select value={value} onChange={(event) => onChange(event.target.value)}><option value="">Select relationship...</option>{recipientOptions.map((option) => <option key={option} value={option}>{option}</option>)}</select><ChevronDown size={22} /></div>; }
-
-function GeneratorPage() {
-  const [situation, setSituation] = useState('');
-  const [recipient, setRecipient] = useState('');
-  const [tone, setTone] = useState('Diplomatic');
-  const [response, setResponse] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [attempts, setAttempts] = useState(0);
-  const generate = async () => { if (!situation.trim() || loading || attempts >= 3) return; setLoading(true); const draft = await generateMockResponse(); setResponse(draft || exactResponse); setAttempts((current) => current + 1); setLoading(false); };
-  const copy = (text) => navigator.clipboard?.writeText(text);
-  const startOver = () => { setSituation(''); setRecipient(''); setResponse(''); setTone('Diplomatic'); };
-  return <div className="reference-site"><Header simple /><main className="generator-page"><p className="exact-copy"><span>The AI that drafts Polite &amp; Diplomatic Refusals</span><span>so you keep Your boundaries</span><span>&amp; your professional and personal relationships intact.</span></p>{response ? <OutputBox response={response} copy={copy} onStartOver={startOver} /> : <InputBox situation={situation} setSituation={setSituation} recipient={recipient} setRecipient={setRecipient} tone={tone} setTone={setTone} loading={loading} generate={generate} />}{response && <div className="reference-warning">This is the Lite (Free) Version, but if u are consistently using it &amp; are professional then you should try Pro version for high level Output with extra features!</div>}{response && <button className="ask-again" onClick={() => setResponse(secondResponse)}>Ask Again</button>}<p className="attempt-note">*For Free version only give 3 attempts</p><button className="history-pill">Past Asked History</button><p className="feature-note">*Feature Only For Paid active for paid (pro) Version</p><section className="generator-benefits"><Feature icon="↝" title="Keep Your Connections">Designed specifically to protect your relationships with seniors, family, and managers.</Feature><Feature icon="♧" title="Psychologically Sound">We format boundaries that people actually respect without feeling offended or hurt.</Feature><Feature icon="▣" title="Private & Secure">Your situations are never saved or stored. Type freely and with confidence.</Feature></section></main><ScrollDownIndicator /></div>;
-}
-
-function InputBox({ situation, setSituation, recipient, setRecipient, tone, setTone, loading, generate, attempts = 0 }) {
-  const remaining = Math.max(0, 3 - attempts);
-  return (
-    <section className="input-box">
-      <div className="input-attempts-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-        <label style={{ margin: 0 }}>1. What do you need to say no to?</label>
-        <span className="attempts-pill-tag" style={{ background: '#fef3c7', color: '#b45309', fontSize: '12px', fontWeight: '700', padding: '3px 10px', borderRadius: '100px' }}>
-          {remaining}/3 free chances remaining
-        </span>
-      </div>
-      <textarea value={situation} onChange={(event) => setSituation(event.target.value)} placeholder="e.g., My boss wants me to work this weekend, but I have family plans..." />
-      <label>2. Who are you telling?</label>
-      <SelectField value={recipient} onChange={setRecipient} />
-      <label>3. Desired Tone</label>
-      <div className="tone-grid">
-        {['Diplomatic', 'Clear & Firm', 'Soft / Gentle', 'Professional'].map((item) => (
-          <button key={item} className={tone === item ? 'tone-selected' : ''} onClick={() => setTone(item)}>{item}</button>
-        ))}
-      </div>
-      <button className="draft-button" onClick={generate} disabled={loading || remaining === 0}>
-        {loading ? 'Finding the right words...' : remaining === 0 ? 'Limit Reached (3/3 Used)' : <><Sparkles size={21} /> Draft My Polite Reply</>}
-      </button>
-    </section>
-  );
-}
-
-function OutputBox({ response, copy, onStartOver }) { return <section className="output-box"><h2><span className="ready-dot" /> Your Drafts are Ready</h2><div className="draft-response"><p>{exactResponse}</p><button onClick={() => copy(exactResponse)} aria-label="Copy first draft"><Copy size={17} /></button></div><div className="draft-response"><p>{response === exactResponse ? secondResponse : response}</p><button onClick={() => copy(response)} aria-label="Copy second draft"><Copy size={17} /></button></div><button className="start-over" onClick={onStartOver}>Start Over</button></section>; }
-
 function App() {
   const [path, setPath] = useState(window.location.pathname);
   useEffect(() => {
@@ -701,7 +1185,7 @@ function App() {
     return () => window.removeEventListener('popstate', update);
   }, []);
 
-  // Force single landing page experience across all URLs
   return <LandingPage />;
 }
+
 export default App;

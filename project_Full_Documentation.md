@@ -34,30 +34,38 @@
 | Icons | lucide-react | ArrowRight, Check, ChevronDown, Copy, Menu, Sparkles, X, Mail, MessageCircle |
 | Fonts | DM Sans (body), Fraunces (display) | Loaded via Google Fonts in `index.css` |
 | State | React `useState` / `useEffect` | Smooth scrolling, single-page state, input handling, currency & billing toggles |
-| Routing | Single-page App Architecture | All CTA buttons, navigation links, and auth options smooth scroll to `#core-tool` or respective sections on the main landing page |
-| Backend | Supabase (provisioned) | `.env` has keys; ready for authentication & database integration |
-| Database | Mock / Hardcoded Data | All testimonial data, FAQs, pricing plans, and mock responses stored in frontend components |
+| Routing | Single-page App Architecture | All CTA buttons scroll smoothly to `#core-tool` or respective sections |
+| Backend | FastAPI (Python) | Running on `localhost:8000` with CORS support for `localhost:5173` |
+| Database / Auth | Supabase PostgreSQL | `public.usage`, `public.generations`, `public.profiles`, `public.feedback` |
+| AI Integration | Google Gemini API (`gemini-1.5-flash`) | Server-side execution using `GEMINI_API_KEY` from `backend/.env` |
 
 ### Key Files
 
 ```
 e:\HowToSayNo\
+├── backend/
+│   ├── app/
+│   │   ├── main.py              — FastAPI application routes & Supabase DB REST handlers
+│   │   ├── gemini_service.py    — Server-side Gemini AI generation service & HowToSayNo prompt system
+│   │   └── db.py                — Supabase client config
+│   ├── .env                     — Environment variables (SUPABASE_URL, SUPABASE_KEY, GEMINI_API_KEY)
+│   └── requirements.txt         — FastAPI, Uvicorn, Python-dotenv, Supabase
 ├── src/
-│   ├── App.jsx              — Complete single-page landing application (all sections, pricing, testimonials, core tool)
-│   ├── App.css              — Full design system CSS (responsive layouts, floating contact stack, pricing cards, animations)
-│   ├── index.css            — Tailwind directives + base resets + font imports
-│   ├── main.jsx             — React entry point (StrictMode + createRoot)
+│   ├── App.jsx                  — Complete single-page landing application
+│   ├── App.css                  — Full design system CSS
+│   ├── index.css                — Base styles & font imports
+│   ├── main.jsx                 — React entry point
 │   ├── data/
-│   │   └── mockData.js      — Recipient options, FAQs, mock responses
+│   │   └── mockData.js          — Recipient options, FAQs, testimonials
 │   └── services/
-│       └── api.js           — Mock API generator (generateMockResponse)
+│       └── api.js               — API service client
 ├── project_Full_Documentation.md — Full project specification & documentation
-└── package.json             — Project metadata & build scripts
+└── package.json                 — Project metadata & build scripts
 ```
 
 ---
 
-## 3. Application Architecture
+## 3. Application & Backend Architecture
 
 ### 3.1 Routing & Single-Page Architecture
 
@@ -76,7 +84,20 @@ The app uses a **single-page architecture**. The `App` component renders the com
 | `#contact` | Feedback & Direct Contact | Schedule a Call / WhatsApp button, Gmail button, 7-Day Free Pro week pass bonus card |
 | `#reviews-3` | Testimonials Block 3 | Final 5 testimonials (Vikram S., Isha M., Sameer Dhou, Aditi Rai, Daniel Shah) |
 
-### 3.2 State Management
+### 3.2 Backend Endpoints (`http://localhost:8000`)
+
+- `GET /api/health` — API health check.
+- `GET /api/usage/{user_id}` — Retrieve user generation count & free generations remaining.
+- `POST /api/usage/{user_id}/increment` — Increment usage count in `public.usage` (capped at 3 free generations).
+- `POST /api/generate` — Main generation endpoint:
+  - Validates `user_id` (UUID) and input parameters (`situation`, `recipient`, `tone`, etc.).
+  - Checks user record in `public.usage` (returns HTTP 404 if missing, HTTP 403 if `generation_count >= 3`).
+  - Calls Gemini API server-side using system prompt instructions (generates 2+ distinct refusal options).
+  - On Gemini success, increments and verifies `generation_count` in `public.usage`.
+  - Saves record to `public.generations` (`user_id`, `situation`, `recipient`, `tone`, `response`, `id`).
+  - Returns `response`, `generation_id`, `generation_count`, and `free_generations_remaining`.
+
+### 3.3 State Management
 
 All state is local component-level `useState`:
 - **LandingPage:** `faq` (which FAQ is expanded)
@@ -85,7 +106,7 @@ All state is local component-level `useState`:
 - **Header:** `open` (mobile menu toggle)
 - **FeedbackPage / Contact:** `sent` (form submitted state)
 
-### 3.3 Data Flow
+### 3.4 Data Flow
 
 ```
 User Input (situation + recipient + tone)
@@ -101,9 +122,20 @@ User can copy to clipboard or "Start Over" / "Ask Again"
 
 ---
 
-## 4. Page & Section Breakdown
+## 4. HowToSayNo AI System Instructions
 
-### 4.1 Landing Page (`/`) — Full Section Breakdown
+The backend Gemini helper (`app/gemini_service.py`) strictly enforces the **HowToSayNo AI** guidelines:
+- **Core Principle:** CLEAR + POLITE + HONEST + CONTEXT-APPROPRIATE + NATURAL.
+- **Mandatory Output:** At least **2 distinct refusal options** (e.g., Direct & Professional vs. Diplomatic with Alternative).
+- **Truth Preservation:** Zero invented fake excuses, illnesses, or emergencies.
+- **Tone & Relationship Match:** Tailors responses for Manager, Client, Friend, Family, or Stranger across WhatsApp, Email, Slack, or Spoken communication.
+- **Multilingual Support:** Handles English, Hindi, Marathi, Hinglish, and mixed inputs naturally.
+
+---
+
+## 5. Page & Section Breakdown
+
+### 5.1 Landing Page (`/`) — Full Section Breakdown
 
 1. **Header** — Logo "HowToSayNo.com" with checkmark badge, nav links (How it works, Pricing, Sign In, Use Now button scrolling to `#core-tool`).
 2. **Hero** — "HowToSay → No → No" visual with red/green "No" badges, headline "Politely + Diplomatically", tagline, browser mockup sketch, CTA button, social proof (avatar stack, 5-star rating, "Loved by people worldwide" text).
@@ -118,7 +150,7 @@ User can copy to clipboard or "Start Over" / "Ask Again"
 11. **Testimonials Block 3** — Final 5 review cards (Vikram S., Isha M., Sameer Dhou, Aditi Rai, Daniel Shah).
 12. **Footer** — Logo, tagline, "See More Reviews" scroll button, "Use Now" smooth scroll button, links column.
 
-### 4.2 Floating Social & Contact Stack
+### 5.2 Floating Social & Contact Stack
 Pinned to bottom-right across all pages:
 - YouTube (`https://youtube.com/@printsmaartofficialpage?si=fpCgFSoj9R4iB2Os`)
 - WhatsApp (`+91 87678 77602`)
@@ -126,7 +158,7 @@ Pinned to bottom-right across all pages:
 
 ---
 
-## 5. Pricing System (Detailed 5-Tier Structure)
+## 6. Pricing System (Detailed 5-Tier Structure)
 
 | Icon | Plan Name | Persona / Subtitle | Core Re-hook Statement / Desc | Monthly INR | Yearly INR | Monthly USD | Yearly USD |
 |:---:|---|---|---|:---:|:---:|:---:|:---:|
@@ -144,9 +176,9 @@ Pinned to bottom-right across all pages:
 
 ---
 
-## 6. Design System
+## 7. Design System
 
-### 6.1 Colors
+### 7.1 Colors
 
 ```
 --navy:      #111a2d   (primary text, dark backgrounds)
@@ -157,37 +189,13 @@ Pinned to bottom-right across all pages:
 --yellow:    #ffd600   (warning banner, history pill)
 ```
 
-### 6.2 Typography & Spacing
+### 7.2 Typography & Spacing
 - DM Sans (body) + Fraunces (display display font)
 - Max content width: 1160px
 - Border radius: 28px (sections), 22px (input/output boxes), 18px (pricing cards)
 
 ---
 
-## 7. Recent Implementation Log (Consolidated Updates)
-
-1. **Single-Page Consolidation**: Removed external `/use` navigation. All CTA buttons, header links, and sign-in actions scroll smoothly to `#core-tool` on the main page.
-2. **Updated Copy Statements**:
-   - Primary statement: *“The AI that properly Articulates Polite & Diplomatic Refusals so you keep Your boundaries & your professional and personal relationships intact”*
-   - Core Tool statement: *"Draft your polite refusal right now without leaving the page. - The AI that drafts Polite & Diplomatic Refusals so you keep Your boundaries & your professional and personal relationships intact."*
-3. **Usage Limit & Extension Promo**: Added `3/3 Free Chances` remaining indicator pill and *"Do the free sign in & enjoy 10 free How to Say No assists with Web Extension Feature!"* promo banner.
-4. **15 User Testimonials**: Added 15 authentic draft testimonials distributed in 3 distinct blocks across the page.
-5. **Contact & Social Buttons**: Integrated Schedule a Call / WhatsApp button, Contact Gmail button, and fixed floating YouTube/WhatsApp/Gmail action stack.
-6. **5-Tier Pricing Grid**: Upgraded pricing to 5 cards supporting Monthly vs Yearly toggles and INR vs USD currencies.
-
----
-
-## 8. Future Roadmap
-
-### Phase 1: Real AI Integration & Supabase Backend
-- Wire `generateMockResponse()` to OpenAI/Anthropic via Supabase Edge Functions.
-- Enforce real rate limiting and user session history in Supabase Postgres.
-
-### Phase 2: Web Extension Feature & Stripe Payments
-- Build the Chrome Web Extension granting 10 free assists.
-- Connect Stripe checkout webhooks for all 5 pricing tiers.
-
----
 
 ## 9. Environment & Build Commands
 
@@ -199,6 +207,33 @@ npm run build      # Build production bundle (Vite 5)
 
 ---
 
-*Document last updated: September 2026*  
-*Project status: UI & Single-Page Landing Architecture Complete — Ready for Backend & API integration.*
+### Key Implementation Features Completed
+- **Live Gemini AI Integration**: Connected to Google Gemini `gemini-3.5-flash-lite` with server-side prompt enforcement and clean 2-card UI draft formatting.
+- **Hybrid User Authentication System**: Integrated Supabase Auth (`signUpUser`, `signInUser`, `signOutUser`, `onAuthChange`). Supports anonymous guests and authenticated registered users.
+- **Dynamic Usage Tracking & 10 Credits**: 
+  - **Guest Users:** 3 free generation credits limit.
+  - **Authenticated Users:** 10 generation credits limit.
+  - **Auto Sign-In Warning:** Automatically prompts guests to sign in or create an account with an interactive `AuthModal` popup when they exhaust their initial 3 credits.
+- **Resilient Database Layer**: Non-blocking database calls in `public.usage` and `public.generations`.
+- **Consolidated UI**: Single-page smooth scrolling landing page with live status indicator (`Backend: Connected ✓`), credit counter pills, user badge in header, and responsive modal popup.
+
+- **PostHog Product Analytics (EU Cloud)**: Integrated `posthog-js` SDK connecting to PostHog EU Cloud instance (`https://eu.i.posthog.com`, Project ID `256195`). Autocaptures pageviews, user sessions, user identification on authentication, and custom track events (`refusal_generate_success`, `auth_modal_opened`, `user_signed_in`, `guest_limit_reached`).
+
+---
+
+## 8. Current Status & Next Steps
+
+### 8.1 Status Assessment: **User Auth, Hybrid Credit Model & Analytics Live**
+The core functionality of HowToSayNo is fully integrated:
+1. React frontend communicates with FastAPI backend via REST APIs.
+2. AI generation is powered live by `gemini-3.5-flash-lite`.
+3. Database usage tracking & limit enforcement (3 guest credits vs 10 member credits) is live with Supabase Auth integration.
+4. Product analytics and session recording active via PostHog EU Cloud.
+5. Clean modal popup & credit badge UI integrated into core tool.
+
+---
+
+*Document last updated: October 2026*  
+*Project status: User Auth + Hybrid Credit System + PostHog EU Analytics Live — Ready for Production Deployment & Extension Integration.*
+
 

@@ -81,12 +81,14 @@
 }
 /* Reference Hero styling matching exact image design */
 .reference-hero { width: min(calc(100% - 52px), 1160px); margin: 16px auto 26px; padding: 60px 4% 50px; background: #eef7ff; border-radius: 28px; text-align: center; font-family: system-ui, -apple-system, sans-serif; position: relative; animation: sectionFadeIn .6s ease both; }
-.hero-mark { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 34px; font-weight: 800; color: #000000; letter-spacing: -0.04em; margin-bottom: 8px; }
-.hero-mark span { color: #000000; font-weight: 800; }
-.hero-mark b.bad-no { display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; background: #000000; color: #ff3b30; border-radius: 50%; font-size: 26px; font-weight: 900; position: relative; }
-.hero-mark b.bad-no::after { content: '✕'; position: absolute; top: -6px; right: -4px; width: 20px; height: 20px; background: #ff3b30; color: #fff; border-radius: 50%; font-size: 11px; display: flex; align-items: center; justify-content: center; border: 2px solid #eef7ff; }
-.hero-mark b.good-no { display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; background: #000000; color: #28c763; border-radius: 50%; font-size: 26px; font-weight: 900; position: relative; }
-.hero-mark b.good-no::after { content: '✓'; position: absolute; top: -6px; right: -4px; width: 20px; height: 20px; background: #1d9bf0; color: #fff; border-radius: 50%; font-size: 11px; display: flex; align-items: center; justify-content: center; border: 2px solid #eef7ff; }
+.hero-mark { display: flex; align-items: center; justify-content: center; gap: 12px; font-size: clamp(38px, 5.5vw, 52px); font-weight: 900; color: #000000; letter-spacing: -0.05em; margin-bottom: 12px; }
+.hero-mark span { color: #000000; font-weight: 900; }
+.hero-mark b.bad-no { display: inline-flex; align-items: center; justify-content: center; width: 68px; height: 68px; background: #000000; color: #ff3b30; border-radius: 50%; font-size: 34px; font-weight: 900; position: relative; transition: transform 0.3s ease; }
+.hero-mark b.bad-no:hover { transform: scale(1.1) rotate(-6deg); }
+.hero-mark b.bad-no::after { content: '✕'; position: absolute; top: -6px; right: -6px; width: 26px; height: 26px; background: #ff3b30; color: #fff; border-radius: 50%; font-size: 13px; font-weight: 900; display: flex; align-items: center; justify-content: center; border: 3px solid #eef7ff; box-shadow: 0 4px 10px rgba(255,59,48,0.4); }
+.hero-mark b.good-no { display: inline-flex; align-items: center; justify-content: center; width: 68px; height: 68px; background: #000000; color: #28c763; border-radius: 50%; font-size: 34px; font-weight: 900; position: relative; transition: transform 0.3s ease; }
+.hero-mark b.good-no:hover { transform: scale(1.1) rotate(6deg); }
+.hero-mark b.good-no::after { content: '✓'; position: absolute; top: -6px; right: -6px; width: 26px; height: 26px; background: #1d9bf0; color: #fff; border-radius: 50%; font-size: 13px; font-weight: 900; display: flex; align-items: center; justify-content: center; border: 3px solid #eef7ff; box-shadow: 0 4px 10px rgba(40,199,99,0.4); }
 
 .reference-hero h1 { font-size: clamp(34px, 5vw, 54px); font-weight: 900; color: #1c2738; margin: 0 0 10px; letter-spacing: -0.04em; }
 .hero-tagline { font-size: 18px; font-weight: 800; color: #000000; margin: 0 0 38px; }
@@ -404,3 +406,239 @@
   .pricing-bottom { font-size: 14px; }
   .reference-feature { grid-template-columns: 42px 1fr; padding: 13px; }
 }
+
+/* Auth Modal Overlay & Card Styles */
+.auth-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(6px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: modalFadeIn 0.25s ease both;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.auth-modal-card {
+  background: #ffffff;
+  width: min(100%, 460px);
+  border-radius: 24px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  position: relative;
+  border: 1px solid #e2e8f0;
+}
+
+.auth-modal-header-banner {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  color: #ffffff;
+  padding: 28px 24px 22px;
+  text-align: center;
+  position: relative;
+}
+
+.auth-modal-close-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: #ffffff;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.auth-modal-close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.auth-value-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #22c55e;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 100px;
+  margin-bottom: 10px;
+}
+
+.auth-modal-header-banner h3 {
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0 0 6px;
+}
+
+.auth-modal-header-banner p {
+  font-size: 13px;
+  color: #cbd5e1;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.auth-modal-tabs {
+  display: flex;
+  background: #f1f5f9;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.auth-tab-btn {
+  flex: 1;
+  padding: 14px;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 700;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.auth-tab-btn.active {
+  background: #ffffff;
+  color: #0f172a;
+  border-bottom: 3px solid #22c55e;
+}
+
+.auth-modal-body {
+  padding: 24px;
+}
+
+.auth-input-group {
+  margin-bottom: 16px;
+  text-align: left;
+}
+
+.auth-input-group label {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 6px;
+}
+
+.auth-input-group input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 12px;
+  font-size: 15px;
+  color: #0f172a;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.auth-input-group input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.auth-submit-btn {
+  width: 100%;
+  padding: 14px;
+  background: #22c55e;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  margin-top: 8px;
+  box-shadow: 0 4px 14px rgba(34, 197, 94, 0.3);
+  transition: transform 0.2s, background 0.2s;
+}
+.auth-submit-btn:hover {
+  background: #16a34a;
+  transform: translateY(-2px);
+}
+.auth-submit-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.auth-benefits-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid #f1f5f9;
+  text-align: left;
+}
+
+.auth-benefit-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: #475569;
+  font-weight: 600;
+}
+
+.auth-user-badge-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 6px 14px;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.auth-signout-btn {
+  border: none;
+  background: #ef4444;
+  color: #ffffff;
+  padding: 4px 10px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.auth-signout-btn:hover {
+  background: #dc2626;
+}
+
+/* Loading Pulse Spinner Animation */
+@keyframes pulseGlow {
+  0% { opacity: 0.6; transform: scale(0.98); }
+  50% { opacity: 1; transform: scale(1.02); }
+  100% { opacity: 0.6; transform: scale(0.98); }
+}
+
+@keyframes spinSlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.loading-btn-content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  animation: pulseGlow 1.8s infinite ease-in-out;
+}
+
+.spinner-icon {
+  animation: spinSlow 1.5s linear infinite;
+}
+
