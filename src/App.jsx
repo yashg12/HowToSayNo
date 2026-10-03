@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowRight, Check, ChevronDown, Copy, LockKeyhole, Mail, MessageCircle, Menu, Sparkles, X } from 'lucide-react';
+import { ArrowRight, Check, ChevronDown, Copy, LockKeyhole, Mail, MessageCircle, Menu, Sparkles, Sprout, Users, X } from 'lucide-react';
 import { checkBackendHealth, generateRefusalApi, getUserUsageApi, getUserSessionInfo } from './services/api';
 import { initAuthSession, signInUser, signUpUser, signOutUser, onAuthChange } from './services/auth';
 import { identifyUser, resetPostHog, trackEvent } from './services/posthog';
@@ -95,16 +95,16 @@ function ContactModal({ isOpen, onClose, planName = 'Upgrade' }) {
         <div className="auth-modal-body" style={{ padding: '24px 20px', textAlign: 'center' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '20px' }}>
             <a
-              href="https://wa.me/918767877602"
+              href="https://forms.gle/7wF8oY5AM4Rb1ct36"
               target="_blank"
               rel="noopener noreferrer"
               className="schedule-call-green-btn"
               style={{ justifyContent: 'center', width: '100%', borderRadius: '14px', fontSize: '15px' }}
               onClick={() => {
-                trackEvent('contact_whatsapp_clicked', { plan: planName });
+                trackEvent('contact_form_clicked', { plan: planName });
               }}
             >
-              📅 Schedule a Call / WhatsApp <ArrowRight size={18} />
+              📅  Schedule a Call / WhatsApp <ArrowRight size={18} />
             </a>
 
             <a
@@ -876,7 +876,7 @@ function LandingPage() {
 
               <div className="feedback-compact-actions" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
                 <a
-                  href="https://wa.me/918767877602"
+                  href="https://forms.gle/7wF8oY5AM4Rb1ct36"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="schedule-call-green-btn"
@@ -1003,10 +1003,60 @@ function LandingPage() {
   );
 }
 
-function SelectField({ value, onChange }) { return <div className="reference-select"><select value={value} onChange={(event) => onChange(event.target.value)}><option value="">Select relationship...</option>{recipientOptions.map((option) => <option key={option} value={option}>{option}</option>)}</select><ChevronDown size={22} /></div>; }
+function SelectField({ value, onChange, customRecipient, setCustomRecipient }) {
+  const isOther = value === 'Other' || (!recipientOptions.includes(value) && value !== '');
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <div className="reference-select">
+        <select
+          value={recipientOptions.includes(value) ? value : (value ? 'Other' : '')}
+          onChange={(event) => {
+            const val = event.target.value;
+            if (val === 'Other') {
+              onChange('Other');
+              if (setCustomRecipient) setCustomRecipient('');
+            } else {
+              onChange(val);
+            }
+          }}
+        >
+          <option value="">Select relationship...</option>
+          {recipientOptions.map((option) => (
+            <option key={option} value={option}>{option}</option>
+          ))}
+        </select>
+        <ChevronDown size={22} />
+      </div>
+
+      {(value === 'Other' || (isOther && value !== '')) && setCustomRecipient && (
+        <input
+          type="text"
+          value={customRecipient}
+          onChange={(e) => {
+            setCustomRecipient(e.target.value);
+            onChange(e.target.value || 'Other');
+          }}
+          placeholder="Specify relationship (e.g., Landlord, Neighbor, Team Lead)..."
+          style={{
+            width: '100%',
+            padding: '12px 16px',
+            borderRadius: '12px',
+            border: '1.5px solid #cbd5e1',
+            fontSize: '14px',
+            outline: 'none',
+            transition: 'border-color 0.2s',
+            boxSizing: 'border-box'
+          }}
+        />
+      )}
+    </div>
+  );
+}
 
 function InputBox({ situation, setSituation, recipient, setRecipient, tone, setTone, loading, generate, freeRemaining = 3, maxLimit = 3, user = null, errorMsg = '', onOpenAuthModal }) {
   const isGuest = !user || !user.isAuthenticated;
+  const [customRecipient, setCustomRecipient] = useState('');
 
   return (
     <section className="input-box">
@@ -1018,7 +1068,12 @@ function InputBox({ situation, setSituation, recipient, setRecipient, tone, setT
       </div>
       <textarea value={situation} onChange={(event) => setSituation(event.target.value)} placeholder="e.g., My boss wants me to work this weekend, but I have family plans..." />
       <label>2. Who are you telling?</label>
-      <SelectField value={recipient} onChange={setRecipient} />
+      <SelectField
+        value={recipient}
+        onChange={setRecipient}
+        customRecipient={customRecipient}
+        setCustomRecipient={setCustomRecipient}
+      />
       <label>3. Desired Tone</label>
       <div className="tone-grid">
         {['Diplomatic', 'Clear & Firm', 'Soft / Gentle', 'Professional'].map((item) => (
@@ -1059,14 +1114,66 @@ function InputBox({ situation, setSituation, recipient, setRecipient, tone, setT
 function OutputBox({ response, copy, onStartOver }) {
   const [copiedIndex, setCopiedIndex] = useState(null);
 
-  let drafts = response.split(/###|\n\n(?=")/).map((d) => d.replace(/^\*\*AI:\*\*\s*/i, '').trim()).filter(Boolean);
+  let rawDrafts = response.split(/###|\n\n(?=")/).map((d) => d.replace(/^\*\*AI:\*\*\s*/i, '').trim()).filter(Boolean);
   
-  if (drafts.length === 1) {
-    const lines = drafts[0].split('\n\n').filter(Boolean);
+  if (rawDrafts.length === 1) {
+    const lines = rawDrafts[0].split('\n\n').filter(Boolean);
     if (lines.length >= 2) {
-      drafts = lines;
+      rawDrafts = lines;
     }
   }
+
+  const parsedDrafts = rawDrafts.map((rawBlock, idx) => {
+    let textContent = rawBlock;
+    let badge = '';
+    let description = '';
+
+    if (rawBlock.includes('|||')) {
+      const parts = rawBlock.split('|||');
+      textContent = parts[0].trim();
+      const descPart = parts[1] ? parts[1].trim() : '';
+      if (descPart.includes(':')) {
+        const colonIdx = descPart.indexOf(':');
+        badge = descPart.substring(0, colonIdx + 1).trim();
+        description = descPart.substring(colonIdx + 1).trim();
+      } else {
+        description = descPart;
+      }
+    }
+
+    // Clean any residual markdown bold syntax (**...) from badge and description
+    badge = badge.replace(/\*\*/g, '').trim();
+    description = description.replace(/\*\*/g, '').trim();
+
+    // Standardize quotation format around text if needed
+    let cleanText = textContent.replace(/^["'“](.*)["'”]$/s, '$1').trim();
+    cleanText = `"${cleanText}"`;
+
+    if (!description) {
+      const lower = cleanText.toLowerCase();
+      if (idx === 0) {
+        badge = 'Polite & Appreciative:';
+        if (lower.includes('invitation') || lower.includes('thank') || lower.includes('appreciate')) {
+          description = 'Shows gratitude, gives a clear reason, and keeps the tone friendly.';
+        } else if (lower.includes('work') || lower.includes('busy') || lower.includes('schedule') || lower.includes('plate')) {
+          description = 'Explains workload constraints clearly while maintaining professional courtesy.';
+        } else {
+          description = 'Shows gratitude, gives a clear reason, and keeps the tone friendly.';
+        }
+      } else {
+        badge = 'Warm & Considerate:';
+        if (lower.includes('hope') || lower.includes('wonderful') || lower.includes('thinking') || lower.includes('enjoy')) {
+          description = 'Keeps it respectful, honest, and ends on a positive note.';
+        } else if (lower.includes('protect') || lower.includes('family') || lower.includes('commitments')) {
+          description = 'Softens the refusal while keeping your personal priorities protected.';
+        } else {
+          description = 'Keeps it respectful, honest, and ends on a positive note.';
+        }
+      }
+    }
+
+    return { draftText: cleanText, badge, description };
+  });
 
   const handleCopy = (text, index) => {
     copy(text);
@@ -1087,33 +1194,74 @@ function OutputBox({ response, copy, onStartOver }) {
         Your Drafts are Ready
       </h2>
 
-      {drafts.map((draftText, idx) => (
-        <div key={idx} className="draft-response" style={{ position: 'relative', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '20px', marginBottom: '16px', textAlign: 'left' }}>
-          <p style={{ margin: 0, paddingRight: '40px', fontSize: '15px', lineHeight: '1.6', color: '#334155', whiteSpace: 'pre-wrap' }}>
-            {draftText}
-          </p>
-          <button
-            onClick={() => handleCopy(draftText, idx)}
-            aria-label={`Copy draft ${idx + 1}`}
+      {parsedDrafts.map((item, idx) => (
+        <div key={idx} className="draft-card-wrapper" style={{ marginBottom: '20px', textAlign: 'left' }}>
+          {/* Main Draft Response Box */}
+          <div
+            className="draft-response"
             style={{
-              position: 'absolute',
-              top: '16px',
-              right: '16px',
-              background: 'transparent',
-              border: 'none',
-              color: copiedIndex === idx ? '#22c55e' : '#64748b',
-              cursor: 'pointer',
-              padding: '6px',
-              borderRadius: '8px',
+              position: 'relative',
+              background: '#ffffff',
+              border: '1.5px solid #cbd5e1',
+              borderRadius: '16px',
+              padding: '20px 24px',
+              textAlign: 'left',
+              boxShadow: '0 4px 14px rgba(15, 23, 42, 0.04)'
+            }}
+          >
+            <p style={{ margin: 0, paddingRight: '40px', fontSize: '15.5px', fontWeight: '600', lineHeight: '1.65', color: '#0f172a', whiteSpace: 'pre-wrap' }}>
+              {item.draftText}
+            </p>
+            <button
+              onClick={() => handleCopy(item.draftText, idx)}
+              aria-label={`Copy draft ${idx + 1}`}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                background: 'transparent',
+                border: 'none',
+                color: copiedIndex === idx ? '#22c55e' : '#64748b',
+                cursor: 'pointer',
+                padding: '6px',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s'
+              }}
+              title="Copy draft"
+            >
+              <Copy size={18} />
+            </button>
+          </div>
+
+          {/* 1-Line Description Banner */}
+          <div
+            className="draft-description-banner"
+            style={{
+              marginTop: '8px',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'all 0.2s'
+              gap: '10px',
+              background: idx % 2 === 0 ? '#f0fdf4' : '#eff6ff',
+              border: `1px solid ${idx % 2 === 0 ? '#bbf7d0' : '#bfdbfe'}`,
+              borderRadius: '12px',
+              padding: '10px 16px',
+              color: idx % 2 === 0 ? '#14532d' : '#1e3a8a'
             }}
-            title="Copy draft"
           >
-            <Copy size={18} />
-          </button>
+            {idx % 2 === 0 ? (
+              <Sprout size={18} style={{ color: '#16a34a', flexShrink: 0 }} />
+            ) : (
+              <Users size={18} style={{ color: '#2563eb', flexShrink: 0 }} />
+            )}
+            <span style={{ width: '1px', height: '16px', background: idx % 2 === 0 ? '#bbf7d0' : '#bfdbfe', flexShrink: 0 }} />
+            <span style={{ fontSize: '13.5px', lineHeight: '1.45', color: idx % 2 === 0 ? '#166534' : '#1e40af' }}>
+              {item.badge && <strong style={{ fontWeight: '800', marginRight: '6px', color: idx % 2 === 0 ? '#14532d' : '#1e3a8a' }}>{item.badge}</strong>}
+              <span style={{ fontWeight: '500' }}>{item.description}</span>
+            </span>
+          </div>
         </div>
       ))}
 

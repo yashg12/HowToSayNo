@@ -1,4 +1,4 @@
-export const recipientOptions = ['Manager / Boss', 'Senior / Colleague', 'Client / Customer', 'Teacher / Professor', 'Friend', 'Parent / Elder', 'Relative', 'Partner', 'Stranger'];
+export const recipientOptions = ['Manager / Boss', 'Senior / Colleague', 'Client / Customer', 'Teacher / Professor', 'Friend', 'Parent / Elder', 'Relative', 'Partner', 'Stranger', 'Other'];
 
 export const toneOptions = ['Polite', 'Professional', 'Warm', 'Friendly', 'Firm', 'Very Direct', 'Apologetic', 'Confident', 'Short & Simple'];
 
