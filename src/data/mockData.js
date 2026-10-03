@@ -27,7 +27,7 @@ export const faqs = [
   { question: 'What can I use HowToSayNo for?', answer: 'Use it for thoughtful refusals, boundary-setting, rescheduling, and any message where you want to be clear without sounding harsh.' },
   { question: 'Will the response sound like me?', answer: 'You choose the relationship and tone, then you can adjust the draft until it feels natural to send.' },
   { question: 'Can I use it for work and personal conversations?', answer: 'Yes. Choose the relationship that fits your situation and the draft will keep the tone appropriate for that person.' },
-  { question: 'Is this a real AI service yet?', answer: 'This prototype uses example responses only. The full writing assistant will be connected in a future version.' },
+  { question: 'How the Paid Plan Can Help Me?', answer: 'Pro & Lifetime plans give you higher quality AI outputs, extended generation limits, custom tone controls, saved refusal history, and direct priority support to handle high-stakes professional & personal situations effortlessly.' },
   { question: 'Do I have to send the response exactly as written?', answer: 'No. Every draft is a starting point. Edit it until the words feel honest and comfortable for you.' }
 ];
 

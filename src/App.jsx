@@ -384,7 +384,7 @@ const planDataNew = {
 
 function PricingSection({ user = null, onOpenAuthModal, onOpenContactModal }) {
   const [currency, setCurrency] = useState('inr');
-  const [billing, setBilling] = useState('monthly');
+  const [billing, setBilling] = useState('yearly');
   const activePlans = planDataNew[currency][billing];
 
   return (
@@ -478,9 +478,8 @@ function PricingSection({ user = null, onOpenAuthModal, onOpenContactModal }) {
                     onOpenAuthModal();
                   }
                 } else {
-                  if (onOpenContactModal) {
-                    onOpenContactModal(plan.name);
-                  }
+                  trackEvent('pricing_whatsapp_redirect', { plan: plan.name });
+                  window.open('https://wa.me/918767877602', '_blank');
                 }
               }}
             >
@@ -726,25 +725,14 @@ function LandingPage() {
         {/* 2. Core Tool access */}
         <section className="reference-section inline-tool-section" id="core-tool">
           <h2 className="section-title-center">Craft Your Polite Boundary</h2>
-          <p className="section-subtitle-center">
+          <p className="section-subtitle-center" style={{ color: '#0f172a', fontWeight: '800', fontSize: '16px' }}>
             Draft your polite refusal right now without leaving the page. The AI that articulates diplomatic refusals while preserving your boundaries &amp; relationships intact.
           </p>
 
-          {/* Inspiring Boundary Fact Banner */}
-          <div className="tool-free-limit-banner" style={{ background: '#f0f9ff', border: '1.5px solid #bae6fd' }}>
-            <span className="free-limit-badge" style={{ background: '#0284c7', color: '#ffffff' }}>
-              💡 Did You Know?
-            </span>
-            <p className="extension-promo-text" style={{ color: '#0369a1' }}>
-              {!user?.isAuthenticated ? (
-                <span>
-                  Saying "No" politely to low-priority requests saves over <strong>4.5 hours a week</strong> of stress! <u style={{ cursor: 'pointer', marginLeft: '6px' }} onClick={() => openAuthModalWithWarning('✨ Sign in or register to get extra credits & enjoy web extension feature!')}>Sign in to save your refusal history.</u>
-                </span>
-              ) : (
-                <span>
-                  Boundaries protect your relationships. A clear, diplomatic refusal increases professional respect<strong></strong>!
-                </span>
-              )}
+          {/* Lite / Pro Version Announcement Banner */}
+          <div className="tool-free-limit-banner" style={{ background: '#fef08a', border: '2px solid #facc15', borderRadius: '100px', padding: '12px 24px', boxShadow: '0 2px 10px rgba(234, 179, 8, 0.2)' }}>
+            <p className="extension-promo-text" style={{ color: '#78350f', fontSize: '14.5px', fontWeight: '800', margin: 0 }}>
+              This is the Lite (Free) Version, but if u are consistenly using it &amp; are professional then you should try Pro version for high level Output with extra features!
             </p>
           </div>
 
