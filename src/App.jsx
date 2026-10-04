@@ -677,6 +677,15 @@ function LandingPage() {
       <main>
         {/* 1. Hero Section */}
         <section className="reference-hero">
+          {/* Tech Support by Vercel Animated Badge */}
+          <div className="vercel-tech-badge">
+            <span className="vercel-badge-pulse" />
+            <svg viewBox="0 0 76 65" className="vercel-triangle-logo">
+              <path d="M37.5274 0L75.0548 65H0L37.5274 0Z" fill="currentColor" />
+            </svg>
+            <span className="vercel-badge-text">tech support by <strong>Vercel</strong></span>
+          </div>
+
           <div className="hero-mark"><span>HowToSay</span><b className="bad-no">No</b><ArrowRight size={24} /><b className="good-no">No</b></div>
           <h1>Politely + Diplomatically</h1>
           <p className="hero-tagline">which don't makes peoples feel Bad &amp; You don't Look Bad in People's eye!!</p>
@@ -732,28 +741,31 @@ function LandingPage() {
           {/* Lite / Pro Version Announcement Banner */}
           <div className="tool-free-limit-banner" style={{ background: '#fef08a', border: '2px solid #facc15', borderRadius: '100px', padding: '12px 24px', boxShadow: '0 2px 10px rgba(234, 179, 8, 0.2)' }}>
             <p className="extension-promo-text" style={{ color: '#78350f', fontSize: '14.5px', fontWeight: '800', margin: 0 }}>
-              This is the Lite (Free) Version, but if u are consistenly using it &amp; are professional then you should try Pro version for high level Output with extra features!
+              Do the free sign in &amp; enjoy 10 free How to Say No assists with Web Extension Feature!
             </p>
           </div>
 
           {response ? (
             <OutputBox response={response} copy={copy} onStartOver={startOver} />
           ) : (
-            <InputBox
-              situation={situation}
-              setSituation={setSituation}
-              recipient={recipient}
-              setRecipient={setRecipient}
-              tone={tone}
-              setTone={setTone}
-              loading={loading}
-              generate={generate}
-              freeRemaining={freeRemaining}
-              maxLimit={maxLimit}
-              user={user}
-              errorMsg={errorMsg}
-              onOpenAuthModal={() => openAuthModalWithWarning('⚠️ Sign in or register to get extra refusal credits!')}
-            />
+            <>
+              <InputBox
+                situation={situation}
+                setSituation={setSituation}
+                recipient={recipient}
+                setRecipient={setRecipient}
+                tone={tone}
+                setTone={setTone}
+                loading={loading}
+                generate={generate}
+                freeRemaining={freeRemaining}
+                maxLimit={maxLimit}
+                user={user}
+                errorMsg={errorMsg}
+                onOpenAuthModal={() => openAuthModalWithWarning('⚠️ Sign in or register to get extra refusal credits!')}
+              />
+              <DoYouKnowBox />
+            </>
           )}
         </section>
 
@@ -1096,6 +1108,68 @@ function InputBox({ situation, setSituation, recipient, setRecipient, tone, setT
         </button>
       )}
     </section>
+  );
+}
+
+const doYouKnowFacts = [
+  "Saying 'No' to low-priority requests instantly creates space to say 'Yes' to your most important career & personal goals.",
+  "Setting polite, clear boundaries actually increases professional respect and prevents long-term burnout.",
+  "Over-explaining with fake excuses often leads to awkward negotiations—a soft, honest refusal is far more effective.",
+  "Diplomatic refusals protect your personal relationships while keeping your schedule and mental peace intact.",
+  "People who set healthy boundaries are rated as more dependable and authoritative in workplace studies."
+];
+
+function DoYouKnowBox() {
+  const [factIndex, setFactIndex] = useState(0);
+
+  useEffect(() => {
+    const randomIndex = Math.floor(Math.random() * doYouKnowFacts.length);
+    setFactIndex(randomIndex);
+  }, []);
+
+  return (
+    <div
+      className="do-you-know-card"
+      style={{
+        maxWidth: '680px',
+        margin: '20px auto 0',
+        background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
+        border: '1.5px solid #bae6fd',
+        borderRadius: '24px',
+        padding: '16px 24px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '14px',
+        boxShadow: '0 4px 14px rgba(14, 165, 233, 0.08)',
+        textAlign: 'left'
+      }}
+    >
+      <div
+        style={{
+          width: '36px',
+          height: '36px',
+          borderRadius: '50%',
+          background: '#0284c7',
+          color: '#ffffff',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontWeight: '800',
+          fontSize: '18px',
+          flexShrink: 0
+        }}
+      >
+        ?
+      </div>
+      <div>
+        <div style={{ fontSize: '12px', fontWeight: '800', color: '#0369a1', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>
+          💡 Do You Know?
+        </div>
+        <p style={{ margin: 0, fontSize: '14px', fontWeight: '600', color: '#0c4a6e', lineHeight: '1.45' }}>
+          {doYouKnowFacts[factIndex]}
+        </p>
+      </div>
+    </div>
   );
 }
 
