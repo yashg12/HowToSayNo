@@ -739,11 +739,7 @@ function LandingPage() {
           </p>
 
           {/* Lite / Pro Version Announcement Banner */}
-          <div className="tool-free-limit-banner" style={{ background: '#fef08a', border: '2px solid #facc15', borderRadius: '100px', padding: '12px 24px', boxShadow: '0 2px 10px rgba(234, 179, 8, 0.2)' }}>
-            <p className="extension-promo-text" style={{ color: '#78350f', fontSize: '14.5px', fontWeight: '800', margin: 0 }}>
-              Do the free sign in &amp; enjoy 10 free How to Say No assists with Web Extension Feature!
-            </p>
-          </div>
+          <BannerAnnouncement user={user} />
 
           {response ? (
             <OutputBox response={response} copy={copy} onStartOver={startOver} />
@@ -1121,10 +1117,29 @@ const doYouKnowFacts = [
 
 function DoYouKnowBox() {
   const [factIndex, setFactIndex] = useState(0);
+  const [fadeText, setFadeText] = useState(true);
 
   useEffect(() => {
-    const randomIndex = Math.floor(Math.random() * doYouKnowFacts.length);
-    setFactIndex(randomIndex);
+    // Pick random initial fact
+    const initialRandom = Math.floor(Math.random() * doYouKnowFacts.length);
+    setFactIndex(initialRandom);
+
+    // Shuffle & change fact every 15 seconds with smooth slow text transition
+    const interval = setInterval(() => {
+      setFadeText(false);
+      setTimeout(() => {
+        setFactIndex((prevIndex) => {
+          let nextIndex;
+          do {
+            nextIndex = Math.floor(Math.random() * doYouKnowFacts.length);
+          } while (nextIndex === prevIndex && doYouKnowFacts.length > 1);
+          return nextIndex;
+        });
+        setFadeText(true);
+      }, 700);
+    }, 15000);
+
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -1165,10 +1180,84 @@ function DoYouKnowBox() {
         <div style={{ fontSize: '12px', fontWeight: '800', color: '#0369a1', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>
           💡 Do You Know?
         </div>
-        <p style={{ margin: 0, fontSize: '14px', fontWeight: '600', color: '#0c4a6e', lineHeight: '1.45' }}>
+        <p
+          style={{
+            margin: 0,
+            fontSize: '14px',
+            fontWeight: '600',
+            color: '#0c4a6e',
+            lineHeight: '1.45',
+            transition: 'opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1), transform 0.7s cubic-bezier(0.4, 0, 0.2, 1)',
+            opacity: fadeText ? 1 : 0,
+            transform: fadeText ? 'translateY(0)' : 'translateY(-3px)'
+          }}
+        >
           {doYouKnowFacts[factIndex]}
         </p>
       </div>
+    </div>
+  );
+}
+
+const loggedInBannerStatements = [
+  'Peoples are saying "No" more & also maintain the good image by just opting for Smart Monthly & Professional Pro Advance Assist Plan',
+  'Peoples are saying that they are moving towards Smart Monthly & Professional Pro Advance feature & Assist Plan because they want best Quality Output & Maintain there Goodwill!'
+];
+
+function BannerAnnouncement({ user }) {
+  const isAuthenticated = user && user.isAuthenticated;
+  const [statementIndex, setStatementIndex] = useState(0);
+  const [fade, setFade] = useState(true);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    // Pick random initial statement
+    const initialRandom = Math.floor(Math.random() * loggedInBannerStatements.length);
+    setStatementIndex(initialRandom);
+
+    // Rotate statement every 18 seconds with ultra-smooth slow transition
+    const interval = setInterval(() => {
+      setFade(false);
+      setTimeout(() => {
+        setStatementIndex((prev) => (prev + 1) % loggedInBannerStatements.length);
+        setFade(true);
+      }, 800);
+    }, 18000);
+
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
+
+  const currentText = isAuthenticated
+    ? loggedInBannerStatements[statementIndex]
+    : "Do the free sign in & enjoy 10 free How to Say No assists with Web Extension Feature!";
+
+  return (
+    <div
+      className="tool-free-limit-banner"
+      style={{
+        background: '#fef08a',
+        border: '2px solid #facc15',
+        borderRadius: '100px',
+        padding: '12px 24px',
+        boxShadow: '0 2px 10px rgba(234, 179, 8, 0.2)',
+        transition: 'opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+        opacity: fade ? 1 : 0,
+        transform: fade ? 'translateY(0)' : 'translateY(-4px)'
+      }}
+    >
+      <p
+        className="extension-promo-text"
+        style={{
+          color: '#78350f',
+          fontSize: '14.5px',
+          fontWeight: '800',
+          margin: 0,
+          lineHeight: '1.4'
+        }}
+      >
+        {currentText}
+      </p>
     </div>
   );
 }

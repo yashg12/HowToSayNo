@@ -1,8 +1,31 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
-  <circle cx="250" cy="220" r="160" fill="#000000"/>
-  <text x="250" y="275" font-family="'DM Sans', 'Inter', system-ui, sans-serif" font-weight="900" font-size="160" fill="#4de32d" text-anchor="middle">No</text>
-  <g transform="translate(340, 60)">
-    <circle cx="45" cy="45" r="45" fill="#1d9bf0"/>
-    <path d="M26 46 L38 58 L64 32" stroke="#ffffff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Main Black Circle -->
+  <circle cx="230" cy="270" r="210" fill="#000000"/>
+  
+  <!-- Green "No" Text -->
+  <text x="230" y="340" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="900" font-size="230" fill="#70e052" text-anchor="middle" letter-spacing="-6">No</text>
+  
+  <!-- Scalloped/Starred Blue Badge Container -->
+  <g transform="translate(300, 75)">
+    <!-- Scalloped 12-point Star Circle -->
+    <path d="M 60,0
+             C 67,0 72,5 78,9
+             C 85,13 92,12 98,18
+             C 104,24 104,31 108,38
+             C 112,44 118,48 119,56
+             C 120,64 115,70 114,78
+             C 113,86 114,93 108,99
+             C 102,105 95,104 88,109
+             C 81,114 77,120 69,120
+             C 61,120 57,114 50,109
+             C 43,104 36,105 30,99
+             C 24,93 25,86 24,78
+             C 23,70 18,64 19,56
+             C 20,48 26,44 30,38
+             C 34,31 34,24 40,18
+             C 46,12 53,13 60,9 Z" fill="#1d63ff"/>
+    
+    <!-- White Checkmark inside Badge -->
+    <path d="M 42,58 L 56,72 L 86,42" stroke="#ffffff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
   </g>
 </svg>
