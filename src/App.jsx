@@ -1212,11 +1212,13 @@ function BannerAnnouncement({ user }) {
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    // Pick random initial statement
+    // Pick random initial statement immediately on sign-in
     const initialRandom = Math.floor(Math.random() * loggedInBannerStatements.length);
     setStatementIndex(initialRandom);
+    setFade(false);
+    const quickTimer = setTimeout(() => setFade(true), 50);
 
-    // Rotate statement every 18 seconds with ultra-smooth slow transition
+    // Rotate statement every 18 seconds with smooth transition
     const interval = setInterval(() => {
       setFade(false);
       setTimeout(() => {
@@ -1225,7 +1227,10 @@ function BannerAnnouncement({ user }) {
       }, 800);
     }, 18000);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearTimeout(quickTimer);
+      clearInterval(interval);
+    };
   }, [isAuthenticated]);
 
   const currentText = isAuthenticated
