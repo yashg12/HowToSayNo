@@ -125,40 +125,34 @@ def get_user_usage(user_id: UUID, is_authenticated: bool = False):
 @app.post("/api/usage/{user_id}/increment")
 def increment_user_usage(user_id: UUID, is_authenticated: bool = False):
     try:
-        data = supabase_request(f"usage?user_id=eq.{user_id}&select=user_id,generation_count")
-        if not data or len(data) == 0:
-            raise HTTPException(status_code=404, detail="User usage not found")
-        
-        current_count = data[0].get("generation_count", 0)
-        max_limit = 10 if is_authenticated else 3
-        if current_count >= max_limit:
-            err_detail = "Member credit limit reached (10/10). Upgrade to Pro for unlimited AI access!" if is_authenticated else "Free guest limit reached (3/3). Please sign in to unlock 10 total credits!"
-            raise HTTPException(status_code=403, detail=err_detail)
-            
+        from datetime import datetime, timezone
+        usage_row = get_or_create_usage(user_id)
+        current_count = usage_row.get("generation_count", 0)
         new_count = current_count + 1
+        
+        now_iso = datetime.now(timezone.utc).isoformat()
         
         updated_data = supabase_request(
             f"usage?user_id=eq.{user_id}",
             method="PATCH",
-            data={"generation_count": new_count},
+            data={
+                "generation_count": new_count,
+                "updated_at": now_iso
+            },
             prefer="return=representation"
         )
         
-        # Verify persistence from DB
-        verify_data = supabase_request(f"usage?user_id=eq.{user_id}&select=generation_count")
-        if verify_data and len(verify_data) > 0:
-            final_count = verify_data[0].get("generation_count", new_count)
+        if updated_data and len(updated_data) > 0:
+            final_count = updated_data[0].get("generation_count", new_count)
         else:
-            final_count = updated_data[0].get("generation_count", new_count) if updated_data else new_count
+            final_count = new_count
 
-        free_remaining = max(0, max_limit - final_count)
-        
+        print(f"Usage increment: {user_id} -> {final_count}")
+
         return {
             "user_id": str(user_id),
             "generation_count": final_count,
-            "max_limit": max_limit,
-            "free_generations_remaining": free_remaining,
-            "is_authenticated": is_authenticated
+            "free_generations_remaining": max(0, 3 - final_count)
         }
     except HTTPException:
         raise

@@ -80,15 +80,15 @@ export async function getUserUsageApi(userId, isAuthenticated = false) {
 
 export async function incrementUserUsageApi(userId, isAuthenticated = false) {
   try {
-    console.log(`[Usage Increment] Sending increment request for user ${userId} (isAuthenticated: ${isAuthenticated})`);
+    console.log("INCREMENT START", userId);
     const response = await fetch(`${BACKEND_URL}/api/usage/${userId}/increment?is_authenticated=${isAuthenticated}`, {
-      method: 'POST'
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
     });
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
     const data = await response.json();
-    console.log(`[Usage Increment] Successfully incremented. Returned generation_count: ${data.generation_count}, free_remaining: ${data.free_generations_remaining}`);
+    console.log("INCREMENT RESULT", response.status, data);
     return data;
   } catch (error) {
     console.error('Failed to increment user usage:', error);
