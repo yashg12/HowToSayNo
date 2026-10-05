@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ArrowRight, Check, ChevronDown, Copy, LockKeyhole, Mail, MessageCircle, Menu, Sparkles, Sprout, Users, X } from 'lucide-react';
-import { checkBackendHealth, generateRefusalApi, getUserUsageApi, getUserSessionInfo } from './services/api';
+import { checkBackendHealth, generateRefusalApi, getUserUsageApi, incrementUserUsageApi, getUserSessionInfo } from './services/api';
 import { initAuthSession, signInUser, signUpUser, signOutUser, onAuthChange } from './services/auth';
 import { identifyUser, resetPostHog, trackEvent } from './services/posthog';
 import { faqs, recipientOptions } from './data/mockData';
@@ -580,20 +580,34 @@ function LandingPage() {
     trackEvent('user_signed_out');
     resetPostHog();
     await signOutUser();
+    // Assign a fresh guest UUID on sign out so guest usage starts clean at 0/3
+    const newGuestId = typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+          const r = (Math.random() * 16) | 0;
+          const v = c === 'x' ? r : (r & 0x3) | 0x8;
+          return v.toString(16);
+        });
+    localStorage.setItem('howtosayno_user_id', newGuestId);
+    setResponse('');
+    setErrorMsg('');
     await refreshUserUsage();
   };
 
   const generate = async () => {
     if (!situation.trim() || loading) return;
 
-    // Guest exhausted check -> automatically open AuthModal
-    if (freeRemaining <= 0 && (!user || !user.isAuthenticated)) {
+    const isGuest = !user || !user.isAuthenticated;
+
+    // Guest exhausted check -> automatically open AuthModal with warning
+    if (isGuest && freeRemaining <= 0) {
       trackEvent('guest_limit_reached', { attempts });
-      openAuthModalWithWarning("⚠️ You've used all 3 free guest attempts! Sign in or register to get extra credits!");
+      setErrorMsg("⚠️ Free guest limit reached (3/3). Please sign in or register to get extra credits!");
+      openAuthModalWithWarning("⚠️ You've used all 3 free guest attempts! Sign in or register to unlock 10 credits!");
       return;
     }
 
-    if (freeRemaining <= 0 && user && user.isAuthenticated) {
+    if (!isGuest && freeRemaining <= 0) {
       trackEvent('member_limit_reached', { attempts });
       setErrorMsg("Member credit limit reached (10/10). Please upgrade to Pro for unlimited AI access!");
       return;
@@ -613,13 +627,19 @@ function LandingPage() {
       if (data && data.response) {
         setResponse(data.response);
         trackEvent('refusal_generate_success', { tone, recipient });
-        if (typeof data.generation_count === 'number') {
-          setAttempts(data.generation_count);
+
+        // Increment usage endpoint exactly once after successful generation
+        const sessionInfo = await getUserSessionInfo();
+        const updatedUsage = await incrementUserUsageApi(sessionInfo.userId, sessionInfo.isAuthenticated);
+
+        if (updatedUsage && typeof updatedUsage.generation_count === 'number') {
+          setAttempts(updatedUsage.generation_count);
+          setMaxLimit(updatedUsage.max_limit || (user?.isAuthenticated ? 10 : 3));
+          setFreeRemaining(updatedUsage.free_generations_remaining);
+        } else if (typeof data.generation_count === 'number') {
+          setAttempts(data.generation_count + 1);
           setMaxLimit(data.max_limit || (user?.isAuthenticated ? 10 : 3));
-          setFreeRemaining(data.free_generations_remaining);
-        } else {
-          setAttempts((current) => current + 1);
-          setFreeRemaining((current) => Math.max(0, current - 1));
+          setFreeRemaining(Math.max(0, data.free_generations_remaining - 1));
         }
       }
     } catch (err) {

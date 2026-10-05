@@ -44,7 +44,13 @@ export async function getUserSessionInfo() {
 
   let localId = localStorage.getItem('howtosayno_user_id');
   if (!localId || !/^[0-9a-fA-F-]{36}$/.test(localId)) {
-    localId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+    localId = typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+          const r = (Math.random() * 16) | 0;
+          const v = c === 'x' ? r : (r & 0x3) | 0x8;
+          return v.toString(16);
+        });
     localStorage.setItem('howtosayno_user_id', localId);
   }
   return {
@@ -68,6 +74,24 @@ export async function getUserUsageApi(userId, isAuthenticated = false) {
     return await response.json();
   } catch (error) {
     console.error('Failed to fetch user usage:', error);
+    return null;
+  }
+}
+
+export async function incrementUserUsageApi(userId, isAuthenticated = false) {
+  try {
+    console.log(`[Usage Increment] Sending increment request for user ${userId} (isAuthenticated: ${isAuthenticated})`);
+    const response = await fetch(`${BACKEND_URL}/api/usage/${userId}/increment?is_authenticated=${isAuthenticated}`, {
+      method: 'POST'
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    const data = await response.json();
+    console.log(`[Usage Increment] Successfully incremented. Returned generation_count: ${data.generation_count}, free_remaining: ${data.free_generations_remaining}`);
+    return data;
+  } catch (error) {
+    console.error('Failed to increment user usage:', error);
     return null;
   }
 }

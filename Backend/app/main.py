@@ -13,10 +13,10 @@ from app.gemini_service import generate_refusal
 load_dotenv()
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
+SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_SERVICE_KEY") or os.getenv("SUPABASE_KEY", "")
 
 if not SUPABASE_URL or not SUPABASE_KEY:
-    raise RuntimeError("SUPABASE_URL and SUPABASE_KEY must be set in backend/.env")
+    raise RuntimeError("SUPABASE_URL and SUPABASE_KEY (or SUPABASE_SERVICE_ROLE_KEY) must be set in backend/.env")
 
 app = FastAPI(
     title="HowToSayNo API",
@@ -90,7 +90,7 @@ def get_or_create_usage(user_id: UUID):
                 "usage",
                 method="POST",
                 data={"user_id": str(user_id), "generation_count": 0},
-                prefer="return=representation"
+                prefer="resolution=merge-duplicates,return=representation"
             )
             if inserted_data and len(inserted_data) > 0:
                 return inserted_data[0]
@@ -207,29 +207,7 @@ def generate_refusal_endpoint(req_body: GenerateRequest):
         mode=req_body.mode
     )
 
-    # 4. Increment usage and persist in Supabase
-    new_count = current_count + 1
-    try:
-        supabase_request(
-            f"usage?user_id=eq.{user_id}",
-            method="PATCH",
-            data={"generation_count": new_count},
-            prefer="return=representation"
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to update usage count: {str(e)}")
-
-    # 5. Verify and read updated database value
-    try:
-        verify_data = supabase_request(f"usage?user_id=eq.{user_id}&select=generation_count")
-        if verify_data and len(verify_data) > 0:
-            final_count = verify_data[0].get("generation_count", new_count)
-        else:
-            final_count = new_count
-    except Exception:
-        final_count = new_count
-
-    # 6. Save successful generation to public.generations (Non-blocking if RLS restricts table writes)
+    # 4. Save successful generation to public.generations (Non-blocking if RLS restricts table writes)
     generation_id = str(uuid4())
     generation_record = {
         "id": generation_id,
@@ -267,12 +245,12 @@ def generate_refusal_endpoint(req_body: GenerateRequest):
         except Exception as e:
             print(f"Warning: Failed to save to generations history table (RLS/Auth): {str(e)}")
 
-    free_remaining = max(0, max_limit - final_count)
+    free_remaining = max(0, max_limit - current_count)
 
     return {
         "response": generated_text,
         "generation_id": generation_id,
-        "generation_count": final_count,
+        "generation_count": current_count,
         "max_limit": max_limit,
         "free_generations_remaining": free_remaining,
         "is_authenticated": is_auth
