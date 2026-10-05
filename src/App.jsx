@@ -350,40 +350,380 @@ function ReferenceButton({ children, href = '#core-tool', className = '' }) {
 const planDataNew = {
   inr: {
     monthly: [
-      { name: 'FREE', icon: '🌱', subtitle: 'Just getting started?', desc: 'Try saying No with confidence.', price: '₹0', unit: '', billedNote: 'Forever', features: ['3 AI assists', 'Basic assistance', 'Essential features'], action: 'Get Started', actionStyle: 'outline' },
-      { name: 'QUICK WEEKLY', icon: '⚡', subtitle: 'Need help this week?', desc: 'Get quick assistance when you need it.', price: '₹49', unit: '/ 7 days', billedNote: 'Billed weekly', features: ['AI assistance', 'Unlimited assistance during the plan period', 'Quick responses'], action: 'Choose Weekly', actionStyle: 'outline' },
-      { name: 'SMART MONTHLY', icon: '👤', badge: 'MOST POPULAR', subtitle: 'Want to say No without feeling guilty?', desc: "I’ll help you find the right words.", price: '₹249.99', unit: '/ month', billedNote: 'Billed monthly • Cancel anytime', features: ['Unlimited AI assistance', 'Polite & diplomatic responses', 'Multiple response tones', 'Everyday communication assistance'], action: 'Start Smart', actionStyle: 'solid-green', featured: true },
-      { name: 'PROFESSIONAL PRO', icon: '💼', subtitle: 'Struggling to say No at work?', desc: "I’ll help you handle professional situations.", price: '₹599.99', unit: '/ month', billedNote: 'Billed monthly • Cancel anytime', features: ['Advanced AI responses', 'Professional communication', 'Advanced assistance', 'More powerful AI capabilities'], action: 'Go Pro', actionStyle: 'solid-green' },
-      { name: 'ONE-TIME PURCHASE', icon: '👑', subtitle: 'Want help whenever you need it?', desc: 'Get lifetime access.', price: '₹18,000', unit: '', billedNote: 'One-time payment • Lifetime access', features: ['Lifetime access', 'No recurring subscription', 'Full access to the included features'], action: 'Buy Lifetime', actionStyle: 'outline' }
+      {
+        name: 'FREE',
+        icon: '🌱',
+        subtitle: 'Just getting started?',
+        desc: 'Try saying No with confidence — without sounding rude or hurting the relationship.',
+        price: '₹0',
+        unit: 'Forever',
+        features: [
+          'Find the right words when you’re unsure',
+          'Practice saying No without feeling guilty',
+          'Handle simple requests with confidence'
+        ],
+        subPill: 'Lifetime Only 10 Assist',
+        action: 'Start Saying No →',
+        actionStyle: 'outline-green'
+      },
+      {
+        name: 'QUICK WEEKLY',
+        icon: '⚡',
+        subtitle: 'Need help saying No this week?',
+        desc: 'Tell me what you’re dealing with, and I’ll help you find the right words.',
+        price: '₹99',
+        unit: '/ Per Week',
+        features: [
+          'Handle an urgent request',
+          'Stop overthinking what to say',
+          'Respond politely while keeping the peace',
+          'Get a ready-to-use response when you need it most'
+        ],
+        subPill: '10 Quality Assist Every Day',
+        action: 'Help Me Say No →',
+        actionStyle: 'outline-green'
+      },
+      {
+        name: 'SMART MONTHLY',
+        icon: '👤',
+        badge: 'MOST POPULAR',
+        subtitle: 'Want to say No without feeling guilty?',
+        desc: 'I’ll help you find the right words while protecting your relationships.',
+        price: '₹499',
+        unit: '/ monthly',
+        features: [
+          'Say No without unnecessary guilt',
+          'Find the right words for difficult situations',
+          'Keep conversations polite & respectful',
+          'Choose a tone that feels like you',
+          'Protect your boundaries without hurting goodwill'
+        ],
+        footerNote: 'Unlimited assistance • Multiple tones • History',
+        action: 'Help Me Say No Better →',
+        actionStyle: 'solid-green',
+        featured: true
+      },
+      {
+        name: 'PROFESSIONAL PRO',
+        icon: '💼',
+        subtitle: 'Struggling to say No at work?',
+        desc: 'I’ll help you handle difficult requests without hurting your professional image or relationships.',
+        price: '₹799',
+        unit: '/ monthly',
+        topSubPill: 'Personal + Professional Use',
+        features: [
+          'Handle bosses, clients & colleagues',
+          'Protect your time and reputation',
+          'Find diplomatic wording for sensitive conversations',
+          'Maintain goodwill while standing your ground'
+        ],
+        footerNote: 'Unlimited assistance • Multiple tones • History',
+        action: 'Protect My Professional Image →',
+        actionStyle: 'solid-green'
+      },
+      {
+        name: 'ONE-TIME PURCHASE',
+        icon: '👑',
+        subtitle: 'Want help whenever you need it?',
+        desc: 'Keep your “How do I say No?” assistant with you for life — without another subscription.',
+        price: '₹18,000',
+        unit: '',
+        features: [
+          'Always have help when a difficult request comes your way',
+          'Handle unexpected “No” situations',
+          'Build confidence over time',
+          'Protect your relationships while saying No honestly',
+          'No recurring subscription'
+        ],
+        action: 'Get Lifetime Help →',
+        actionStyle: 'outline-green'
+      }
     ],
     yearly: [
-      { name: 'FREE', icon: '🌱', subtitle: 'Just getting started?', desc: 'Try saying No with confidence.', price: '₹0', unit: '', billedNote: 'Forever', features: ['3 AI assists', 'Basic assistance', 'Essential features'], action: 'Get Started', actionStyle: 'outline' },
-      { name: 'QUICK WEEKLY', icon: '⚡', subtitle: 'Need help this week?', desc: 'Get quick assistance when you need it.', price: '₹49', unit: '/ 7 days', billedNote: 'Billed weekly', features: ['AI assistance', 'Unlimited assistance during the plan period', 'Quick responses'], action: 'Choose Weekly', actionStyle: 'outline' },
-      { name: 'SMART MONTHLY', icon: '👤', badge: 'MOST POPULAR', subtitle: 'Want to say No without feeling guilty?', desc: "I’ll help you find the right words.", price: '₹199.99', unit: '/ month', originalPrice: '₹249.99', billedNote: 'Billed ₹2,399.99 yearly (Save 20%)', discountPill: 'Save 20%', features: ['Unlimited AI assistance', 'Polite & diplomatic responses', 'Multiple response tones', 'Everyday communication assistance'], action: 'Start Smart', actionStyle: 'solid-green', featured: true },
-      { name: 'PROFESSIONAL PRO', icon: '💼', subtitle: 'Struggling to say No at work?', desc: "I’ll help you handle professional situations.", price: '₹499.99', unit: '/ month', originalPrice: '₹599.99', billedNote: 'Billed ₹5,999.99 yearly (Save 17%)', discountPill: 'Save 17%', features: ['Advanced AI responses', 'Professional communication', 'Advanced assistance', 'More powerful AI capabilities'], action: 'Go Pro', actionStyle: 'solid-green' },
-      { name: 'ONE-TIME PURCHASE', icon: '👑', subtitle: 'Want help whenever you need it?', desc: 'Get lifetime access.', price: '₹18,000', unit: '', billedNote: 'One-time payment • Lifetime access', features: ['Lifetime access', 'No recurring subscription', 'Full access to the included features'], action: 'Buy Lifetime', actionStyle: 'outline' }
+      {
+        name: 'FREE',
+        icon: '🌱',
+        subtitle: 'Just getting started?',
+        desc: 'Try saying No with confidence — without sounding rude or hurting the relationship.',
+        price: '₹0',
+        unit: 'Forever',
+        features: [
+          'Find the right words when you’re unsure',
+          'Practice saying No without feeling guilty',
+          'Handle simple requests with confidence'
+        ],
+        subPill: 'Lifetime Only 10 Assist',
+        action: 'Start Saying No →',
+        actionStyle: 'outline-green'
+      },
+      {
+        name: 'QUICK WEEKLY',
+        icon: '⚡',
+        subtitle: 'Need help saying No this week?',
+        desc: 'Tell me what you’re dealing with, and I’ll help you find the right words.',
+        price: '₹99',
+        unit: '/ Per Week',
+        features: [
+          'Handle an urgent request',
+          'Stop overthinking what to say',
+          'Respond politely while keeping the peace',
+          'Get a ready-to-use response when you need it most'
+        ],
+        subPill: '10 Quality Assist Every Day',
+        action: 'Help Me Say No →',
+        actionStyle: 'outline-green'
+      },
+      {
+        name: 'SMART MONTHLY',
+        icon: '👤',
+        badge: 'MOST POPULAR',
+        subtitle: 'Want to say No without feeling guilty?',
+        desc: 'I’ll help you find the right words while protecting your relationships.',
+        price: '₹299',
+        unit: '/ monthly',
+        originalPrice: '₹499',
+        billedNote: 'Billed ₹3,588 yearly (Save up to 40%)',
+        features: [
+          'Say No without unnecessary guilt',
+          'Find the right words for difficult situations',
+          'Keep conversations polite & respectful',
+          'Choose a tone that feels like you',
+          'Protect your boundaries without hurting goodwill'
+        ],
+        footerNote: 'Unlimited assistance • Multiple tones • History',
+        action: 'Help Me Say No Better →',
+        actionStyle: 'solid-green',
+        featured: true
+      },
+      {
+        name: 'PROFESSIONAL PRO',
+        icon: '💼',
+        subtitle: 'Struggling to say No at work?',
+        desc: 'I’ll help you handle difficult requests without hurting your professional image or relationships.',
+        price: '₹599',
+        unit: '/ monthly',
+        originalPrice: '₹799',
+        billedNote: 'Billed ₹7,188 yearly (Save up to 25%)',
+        topSubPill: 'Personal + Professional Use',
+        features: [
+          'Handle bosses, clients & colleagues',
+          'Protect your time and reputation',
+          'Find diplomatic wording for sensitive conversations',
+          'Maintain goodwill while standing your ground'
+        ],
+        footerNote: 'Unlimited assistance • Multiple tones • History',
+        action: 'Protect My Professional Image →',
+        actionStyle: 'solid-green'
+      },
+      {
+        name: 'ONE-TIME PURCHASE',
+        icon: '👑',
+        subtitle: 'Want help whenever you need it?',
+        desc: 'Keep your “How do I say No?” assistant with you for life — without another subscription.',
+        price: '₹18,000',
+        unit: '',
+        features: [
+          'Always have help when a difficult request comes your way',
+          'Handle unexpected “No” situations',
+          'Build confidence over time',
+          'Protect your relationships while saying No honestly',
+          'No recurring subscription'
+        ],
+        action: 'Get Lifetime Help →',
+        actionStyle: 'outline-green'
+      }
     ]
   },
   usd: {
     monthly: [
-      { name: 'FREE', icon: '🌱', subtitle: 'Just getting started?', desc: 'Try saying No with confidence.', price: '$0', unit: '', billedNote: 'Free forever', features: ['3 AI assists', 'Basic assistance', 'Essential features'], action: 'Start Free', actionStyle: 'outline' },
-      { name: 'QUICK WEEKLY', icon: '⚡', subtitle: 'Need help this week?', desc: 'Get quick assistance when you need it.', price: '$1.99', unit: '/ 7 days', billedNote: 'Billed weekly', features: ['AI assistance', 'Unlimited assistance during the plan period', 'Quick responses'], action: 'Get Weekly', actionStyle: 'outline' },
-      { name: 'SMART MONTHLY', icon: '👤', badge: 'MOST POPULAR', subtitle: 'Want to say No without feeling guilty?', desc: "I’ll help you find the right words.", price: '$7.99', unit: '/ month', billedNote: 'Billed monthly • Cancel anytime', features: ['Unlimited AI assistance', 'Polite & diplomatic responses', 'Multiple response tones', 'Everyday communication assistance'], action: 'Choose Monthly', actionStyle: 'solid-green', featured: true },
-      { name: 'PROFESSIONAL PRO', icon: '💼', subtitle: 'Struggling to say No at work?', desc: "I’ll help you handle professional situations.", price: '$19.99', unit: '/ month', billedNote: 'Billed monthly • Cancel anytime', features: ['Advanced AI responses', 'Professional communication', 'Advanced assistance', 'More powerful AI capabilities'], action: 'Go Pro', actionStyle: 'solid-green' },
-      { name: 'ONE-TIME PURCHASE', icon: '👑', subtitle: 'Want help whenever you need it?', desc: 'Get lifetime access.', price: '$699.99', unit: '', billedNote: 'One-time payment • Lifetime access', features: ['Lifetime access', 'No recurring subscription', 'Full access to the included features'], action: 'Buy Lifetime', actionStyle: 'outline' }
+      {
+        name: 'FREE',
+        icon: '🌱',
+        subtitle: 'Just getting started?',
+        desc: 'Try saying No with confidence — without sounding rude or hurting the relationship.',
+        price: '$0',
+        unit: 'Forever',
+        features: [
+          'Find the right words when you’re unsure',
+          'Practice saying No without feeling guilty',
+          'Handle simple requests with confidence'
+        ],
+        subPill: 'Lifetime Only 10 Assist',
+        action: 'Start Saying No →',
+        actionStyle: 'outline-green'
+      },
+      {
+        name: 'QUICK WEEKLY',
+        icon: '⚡',
+        subtitle: 'Need help saying No this week?',
+        desc: 'Tell me what you’re dealing with, and I’ll help you find the right words.',
+        price: '$1.99',
+        unit: '/ Per Week',
+        features: [
+          'Handle an urgent request',
+          'Stop overthinking what to say',
+          'Respond politely while keeping the peace',
+          'Get a ready-to-use response when you need it most'
+        ],
+        subPill: '10 Quality Assist Every Day',
+        action: 'Help Me Say No →',
+        actionStyle: 'outline-green'
+      },
+      {
+        name: 'SMART MONTHLY',
+        icon: '👤',
+        badge: 'MOST POPULAR',
+        subtitle: 'Want to say No without feeling guilty?',
+        desc: 'I’ll help you find the right words while protecting your relationships.',
+        price: '$9.99',
+        unit: '/ monthly',
+        features: [
+          'Say No without unnecessary guilt',
+          'Find the right words for difficult situations',
+          'Keep conversations polite & respectful',
+          'Choose a tone that feels like you',
+          'Protect your boundaries without hurting goodwill'
+        ],
+        footerNote: 'Unlimited assistance • Multiple tones • History',
+        action: 'Help Me Say No Better →',
+        actionStyle: 'solid-green',
+        featured: true
+      },
+      {
+        name: 'PROFESSIONAL PRO',
+        icon: '💼',
+        subtitle: 'Struggling to say No at work?',
+        desc: 'I’ll help you handle difficult requests without hurting your professional image or relationships.',
+        price: '$15.99',
+        unit: '/ monthly',
+        topSubPill: 'Personal + Professional Use',
+        features: [
+          'Handle bosses, clients & colleagues',
+          'Protect your time and reputation',
+          'Find diplomatic wording for sensitive conversations',
+          'Maintain goodwill while standing your ground'
+        ],
+        footerNote: 'Unlimited assistance • Multiple tones • History',
+        action: 'Protect My Professional Image →',
+        actionStyle: 'solid-green'
+      },
+      {
+        name: 'ONE-TIME PURCHASE',
+        icon: '👑',
+        subtitle: 'Want help whenever you need it?',
+        desc: 'Keep your “How do I say No?” assistant with you for life — without another subscription.',
+        price: '$499.99',
+        unit: '',
+        features: [
+          'Always have help when a difficult request comes your way',
+          'Handle unexpected “No” situations',
+          'Build confidence over time',
+          'Protect your relationships while saying No honestly',
+          'No recurring subscription'
+        ],
+        action: 'Get Lifetime Help →',
+        actionStyle: 'outline-green'
+      }
     ],
     yearly: [
-      { name: 'FREE', icon: '🌱', subtitle: 'Just getting started?', desc: 'Try saying No with confidence.', price: '$0', unit: '', billedNote: 'Free forever', features: ['3 AI assists', 'Basic assistance', 'Essential features'], action: 'Start Free', actionStyle: 'outline' },
-      { name: 'QUICK WEEKLY', icon: '⚡', subtitle: 'Need help this week?', desc: 'Get quick assistance when you need it.', price: '$1.99', unit: '/ 7 days', billedNote: 'Billed weekly', features: ['AI assistance', 'Unlimited assistance during the plan period', 'Quick responses'], action: 'Get Weekly', actionStyle: 'outline' },
-      { name: 'SMART MONTHLY', icon: '👤', badge: 'MOST POPULAR', subtitle: 'Want to say No without feeling guilty?', desc: "I’ll help you find the right words.", price: '$6.25', unit: '/ month', originalPrice: '$7.99', billedNote: 'Billed $74.99 yearly (Save 22%)', discountPill: 'Save 22%', features: ['Unlimited AI assistance', 'Polite & diplomatic responses', 'Multiple response tones', 'Everyday communication assistance'], action: 'Choose Monthly', actionStyle: 'solid-green', featured: true },
-      { name: 'PROFESSIONAL PRO', icon: '💼', subtitle: 'Struggling to say No at work?', desc: "I’ll help you handle professional situations.", price: '$15.00', unit: '/ month', originalPrice: '$19.99', billedNote: 'Billed $179.99 yearly (Save 25%)', discountPill: 'Save 25%', features: ['Advanced AI responses', 'Professional communication', 'Advanced assistance', 'More powerful AI capabilities'], action: 'Go Pro', actionStyle: 'solid-green' },
-      { name: 'ONE-TIME PURCHASE', icon: '👑', subtitle: 'Want help whenever you need it?', desc: 'Get lifetime access.', price: '$699.99', unit: '', billedNote: 'One-time payment • Lifetime access', features: ['Lifetime access', 'No recurring subscription', 'Full access to the included features'], action: 'Buy Lifetime', actionStyle: 'outline' }
+      {
+        name: 'FREE',
+        icon: '🌱',
+        subtitle: 'Just getting started?',
+        desc: 'Try saying No with confidence — without sounding rude or hurting the relationship.',
+        price: '$0',
+        unit: 'Forever',
+        features: [
+          'Find the right words when you’re unsure',
+          'Practice saying No without feeling guilty',
+          'Handle simple requests with confidence'
+        ],
+        subPill: 'Lifetime Only 10 Assist',
+        action: 'Start Saying No →',
+        actionStyle: 'outline-green'
+      },
+      {
+        name: 'QUICK WEEKLY',
+        icon: '⚡',
+        subtitle: 'Need help saying No this week?',
+        desc: 'Tell me what you’re dealing with, and I’ll help you find the right words.',
+        price: '$1.99',
+        unit: '/ Per Week',
+        features: [
+          'Handle an urgent request',
+          'Stop overthinking what to say',
+          'Respond politely while keeping the peace',
+          'Get a ready-to-use response when you need it most'
+        ],
+        subPill: '10 Quality Assist Every Day',
+        action: 'Help Me Say No →',
+        actionStyle: 'outline-green'
+      },
+      {
+        name: 'SMART MONTHLY',
+        icon: '👤',
+        badge: 'MOST POPULAR',
+        subtitle: 'Want to say No without feeling guilty?',
+        desc: 'I’ll help you find the right words while protecting your relationships.',
+        price: '$5.99',
+        unit: '/ monthly',
+        originalPrice: '$9.99',
+        billedNote: 'Billed $71.88 yearly (Save 40%)',
+        features: [
+          'Say No without unnecessary guilt',
+          'Find the right words for difficult situations',
+          'Keep conversations polite & respectful',
+          'Choose a tone that feels like you',
+          'Protect your boundaries without hurting goodwill'
+        ],
+        footerNote: 'Unlimited assistance • Multiple tones • History',
+        action: 'Help Me Say No Better →',
+        actionStyle: 'solid-green',
+        featured: true
+      },
+      {
+        name: 'PROFESSIONAL PRO',
+        icon: '💼',
+        subtitle: 'Struggling to say No at work?',
+        desc: 'I’ll help you handle difficult requests without hurting your professional image or relationships.',
+        price: '$11.99',
+        unit: '/ monthly',
+        originalPrice: '$15.99',
+        billedNote: 'Billed $143.88 yearly (Save 25%)',
+        topSubPill: 'Personal + Professional Use',
+        features: [
+          'Handle bosses, clients & colleagues',
+          'Protect your time and reputation',
+          'Find diplomatic wording for sensitive conversations',
+          'Maintain goodwill while standing your ground'
+        ],
+        footerNote: 'Unlimited assistance • Multiple tones • History',
+        action: 'Protect My Professional Image →',
+        actionStyle: 'solid-green'
+      },
+      {
+        name: 'ONE-TIME PURCHASE',
+        icon: '👑',
+        subtitle: 'Want help whenever you need it?',
+        desc: 'Keep your “How do I say No?” assistant with you for life — without another subscription.',
+        price: '$499.99',
+        unit: '',
+        features: [
+          'Always have help when a difficult request comes your way',
+          'Handle unexpected “No” situations',
+          'Build confidence over time',
+          'Protect your relationships while saying No honestly',
+          'No recurring subscription'
+        ],
+        action: 'Get Lifetime Help →',
+        actionStyle: 'outline-green'
+      }
     ]
   }
 };
 
 function PricingSection({ user = null, onOpenAuthModal, onOpenContactModal }) {
-  const [currency, setCurrency] = useState('inr');
+  const [currency, setCurrency] = useState('usd');
   const [billing, setBilling] = useState('yearly');
   const activePlans = planDataNew[currency][billing];
 
@@ -394,7 +734,9 @@ function PricingSection({ user = null, onOpenAuthModal, onOpenContactModal }) {
           Simple Pricing • Powerful AI Assistance
         </div>
         <h2>Say No With Confidence</h2>
-        <p className="pricing-tagline">Choose the plan that fits your needs. Get the right words, save time, and communicate with confidence.</p>
+        <div className="pricing-quote-pill-box">
+          “This plan is not just giving you AI features; it will help You handle the situations where You struggle to say no.” - This Investment Not Expenses
+        </div>
 
         <div className="watch-guide-container">
           <a
@@ -457,9 +799,11 @@ function PricingSection({ user = null, onOpenAuthModal, onOpenContactModal }) {
             </div>
 
             {plan.billedNote && <p className="billed-note-val">{plan.billedNote}</p>}
-            {plan.discountPill && <div className="save-pill-tag">{plan.discountPill}</div>}
 
             <div className="card-features-list">
+              {plan.topSubPill && (
+                <div className="card-feature-top-pill">{plan.topSubPill}</div>
+              )}
               {plan.features.map((feat) => (
                 <div key={feat} className="feat-check-line">
                   <Check size={14} className="feat-check-icon" /> {feat}
@@ -467,16 +811,21 @@ function PricingSection({ user = null, onOpenAuthModal, onOpenContactModal }) {
               ))}
             </div>
 
+            {plan.subPill && (
+              <div className="card-grey-sub-pill">{plan.subPill}</div>
+            )}
+
             <button
               className={`card-action-btn btn-${plan.actionStyle}`}
               onClick={(e) => {
                 e.preventDefault();
-                if (plan.name === 'FREE') {
-                  if (user && user.isAuthenticated) {
-                    document.getElementById('core-tool')?.scrollIntoView({ behavior: 'smooth' });
-                  } else {
-                    onOpenAuthModal();
-                  }
+                if (plan.name === 'FREE' || plan.name === 'QUICK WEEKLY') {
+                  document.getElementById('core-tool')?.scrollIntoView({ behavior: 'smooth' });
+                  // Focus the situation text area if available
+                  setTimeout(() => {
+                    const textarea = document.querySelector('.input-box textarea');
+                    if (textarea) textarea.focus();
+                  }, 300);
                 } else {
                   trackEvent('pricing_whatsapp_redirect', { plan: plan.name });
                   window.open('https://wa.me/918767877602', '_blank');
@@ -485,15 +834,40 @@ function PricingSection({ user = null, onOpenAuthModal, onOpenContactModal }) {
             >
               {plan.action}
             </button>
+
+            {plan.footerNote && (
+              <div className="card-footer-mini-note">{plan.footerNote}</div>
+            )}
           </div>
         ))}
       </div>
 
-      <div className="pricing-bottom-reassurance-bar">
-        <span><Check size={14} className="reassure-check-icon" /> Secure Payment</span>
-        <span><Check size={14} className="reassure-check-icon" /> Cancel Anytime</span>
-        <span><Check size={14} className="reassure-check-icon" /> No Hidden Fees</span>
-        <span><Check size={14} className="reassure-check-icon" /> Your Privacy Matters</span>
+      <div className="pricing-sub-banner-quote">
+        <div className="quote-left-badge">
+          <span className="quote-badge-text">You've got this!</span>
+          <div className="quote-face-icon">😊</div>
+        </div>
+        <div className="quote-center-title">
+          <h3>It's not just about saying No.<br />It's about a better you.</h3>
+        </div>
+        <div className="quote-benefits-grid">
+          <div className="quote-benefit-item">
+            <div className="quote-icon-box green-icon">🛡️</div>
+            <span>Stronger<br />Boundaries</span>
+          </div>
+          <div className="quote-benefit-item">
+            <div className="quote-icon-box green-icon">💚</div>
+            <span>Healthier<br />Relationships</span>
+          </div>
+          <div className="quote-benefit-item">
+            <div className="quote-icon-box blue-icon">💼</div>
+            <span>Greater<br />Professional Respect</span>
+          </div>
+          <div className="quote-benefit-item">
+            <div className="quote-icon-box yellow-icon">⭐</div>
+            <span>More Confidence<br />Every Day</span>
+          </div>
+        </div>
       </div>
     </section>
   );
