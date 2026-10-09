@@ -740,7 +740,7 @@ function PricingSection({ user = null, onOpenAuthModal, onOpenContactModal }) {
 
         <div className="watch-guide-container">
           <a
-            href="https://youtube.com/@printsmaartofficialpage?si=fpCgFSoj9R4iB2Os"
+            href="https://youtu.be/9-QXASyQrBI?si=W8LOJaUkiri9D0-o"
             target="_blank"
             rel="noopener noreferrer"
             className="watch-guide-btn"
@@ -1086,8 +1086,20 @@ function LandingPage() {
           <div className="hero-showcase">
             <div className="browser-sketch">
               <div className="browser-top"><i /><i /><i /></div>
-              <div className="browser-screen" />
-              <div className="browser-controls">‹ <span>▷</span> ›</div>
+              <div className="browser-screen">
+                <iframe
+                  src="https://www.youtube.com/embed/kTKdOJR1lJM?rel=0&modestbranding=1"
+                  title="Review Video Created by User & How to use it Smartly"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+              <div className="browser-video-footer">
+                <span className="sparkle-dot" />
+                <p className="animated-video-title">
+                  Check the Review Video <span className="highlight-green">Created by User</span> &amp; <span className="highlight-blue">How to use it Smartly!</span>
+                </p>
+              </div>
             </div>
             <div className="hero-action">
               <ReferenceButton>Use Now</ReferenceButton>

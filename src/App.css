@@ -93,14 +93,19 @@
 .reference-hero h1 { font-size: clamp(34px, 5vw, 54px); font-weight: 900; color: #1c2738; margin: 0 0 10px; letter-spacing: -0.04em; }
 .hero-tagline { font-size: 18px; font-weight: 800; color: #000000; margin: 0 0 38px; }
 
-.hero-showcase { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; max-width: 860px; margin: 0 auto; text-align: center; }
-.browser-sketch { width: 340px; background: #ffffff; border: 2px solid #000000; border-radius: 12px; padding: 12px 14px 18px; box-shadow: 0 8px 24px rgba(0,0,0,0.06); margin: 0 auto; }
+.hero-showcase { display: grid; grid-template-columns: 1.35fr 1fr; gap: 36px; align-items: center; max-width: 1040px; margin: 0 auto; text-align: center; }
+.browser-sketch { width: 500px; max-width: 100%; background: #ffffff; border: 2px solid #000000; border-radius: 18px; padding: 14px 16px 16px; box-shadow: 0 12px 32px rgba(0,0,0,0.09); margin: 0 auto; transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1); position: relative; }
+.browser-sketch:hover { transform: translateY(-4px) scale(1.015); box-shadow: 0 18px 40px rgba(0,0,0,0.15); }
 .browser-top { display: flex; justify-content: flex-end; gap: 6px; margin-bottom: 10px; }
 .browser-top i { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid #000000; display: inline-block; }
-.browser-screen { width: 100%; height: 220px; border: 1.5px solid #000000; border-radius: 6px; background: #ffffff; margin-bottom: 12px; }
-
-.browser-controls { display: flex; justify-content: center; align-items: center; gap: 14px; font-size: 22px; font-weight: 800; color: #000000; border-top: 1.5px solid #000000; padding-top: 8px; }
-.browser-controls span { border: 1.5px solid #000000; border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; font-size: 14px; padding-left: 2px; }
+.browser-screen { width: 100%; height: 275px; border: 1.5px solid #000000; border-radius: 10px; background: #000000; margin-bottom: 12px; overflow: hidden; position: relative; box-shadow: inset 0 0 12px rgba(0,0,0,0.25); }
+.browser-screen iframe { width: 100%; height: 100%; border: none; display: block; }
+.browser-video-footer { display: flex; align-items: center; justify-content: center; gap: 10px; background: linear-gradient(135deg, #f0fdf4 0%, #eff6ff 100%); border: 1.5px solid #bbf7d0; border-radius: 12px; padding: 10px 14px; margin-top: 4px; box-shadow: 0 2px 8px rgba(34, 197, 94, 0.08); transition: all 0.3s ease; }
+.browser-sketch:hover .browser-video-footer { border-color: #86efac; box-shadow: 0 4px 14px rgba(34, 197, 94, 0.16); }
+.sparkle-dot { width: 9px; height: 9px; border-radius: 50%; background: #28c763; flex-shrink: 0; box-shadow: 0 0 0 0 rgba(40, 199, 99, 0.7); animation: vercelPulseRing 2s infinite; }
+.animated-video-title { font-size: 13.5px; font-weight: 800; margin: 0; line-height: 1.4; color: #0f172a; text-align: center; letter-spacing: -0.01em; }
+.animated-video-title .highlight-green { color: #16a34a; font-weight: 900; }
+.animated-video-title .highlight-blue { color: #2563eb; font-weight: 900; }
 
 .hero-action { display: flex; flex-direction: column; align-items: center; }
 .reference-button { display: inline-flex; align-items: center; gap: 16px; background: #28c763; color: #000000; border-radius: 100px; font-size: 20px; font-weight: 900; padding: 10px 10px 10px 34px; box-shadow: 0 6px 20px rgba(40,199,99,0.3); border: none; cursor: pointer; transition: transform .2s ease, box-shadow .2s ease; text-decoration: none; }
